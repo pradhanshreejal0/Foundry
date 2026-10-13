@@ -6,29 +6,6 @@ import { cloudinaryImage } from "@/lib/cloudinary";
 import { getFinalPrice } from "@/lib/utils";
 import { AdBanner } from "@/components/AdBanner";
 
-const FALLBACK_CATEGORIES = [
-  {
-    name: "Automotive",
-    line: "Thoughtful tech",
-    image: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=900",
-  },
-  {
-    name: "Fashion",
-    line: "Wear it well",
-    image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=900",
-  },
-  {
-    name: "Home",
-    line: "Make room for calm",
-    image: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=900",
-  },
-  {
-    name: "Beauty",
-    line: "The finishing touch",
-    image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=900",
-  },
-];
-
 const DEFAULT_HERO = {
   visible: true,
   kicker: "The good find starts here",
@@ -215,12 +192,11 @@ export default function Home() {
     categories.length >= 4
       ? categories.slice(0, 4).map((c, i) => ({
           name: c.name,
-          line: FALLBACK_CATEGORIES[i]?.line || "Explore",
-          image:
-            c.image || c.banner || FALLBACK_CATEGORIES[i]?.image || FALLBACK_CATEGORIES[0].image,
+          line: c.description || "Explore our collection",
+          image: c.image || c.banner || "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=900",
           id: c._id,
         }))
-      : FALLBACK_CATEGORIES.map((c) => ({ ...c, id: null }));
+      : [];
 
   const topAds = homeAds.slice(0, 1);
   const midAds = homeAds.length > 1 ? homeAds.slice(1) : homeAds;

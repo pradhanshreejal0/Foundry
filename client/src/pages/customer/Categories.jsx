@@ -26,16 +26,6 @@ export default function Categories() {
             api("/ads"),
           ]);
 
-        console.log(
-          "CLIENT CATEGORIES RESPONSE:",
-          categoriesResponse
-        );
-
-        console.log(
-          "CLIENT ADS RESPONSE:",
-          adsResponse
-        );
-
         /*
          * -------------------------------------------------------
          * NORMALIZE CATEGORY RESPONSE
