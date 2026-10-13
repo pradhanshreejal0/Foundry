@@ -121,9 +121,11 @@ export default function Categories() {
       setLoading(true);
       setError("");
 
-      const response = await api("/categories");
-
-      console.log("GET /categories:", response);
+      // Always bypass browser/CDN cache so a just-created category appears immediately.
+      const response = await api("/categories", {
+        accessToken,
+        cache: "no-store",
+      });
 
       const data = normalizeCategories(response);
 
@@ -146,9 +148,10 @@ export default function Categories() {
 
     const fetchCategories = async () => {
       try {
-        const response = await api("/categories");
-
-        console.log("GET /categories:", response);
+        const response = await api("/categories", {
+          accessToken,
+          cache: "no-store",
+        });
 
         const data = normalizeCategories(response);
 
@@ -170,12 +173,15 @@ export default function Categories() {
       }
     };
 
-    fetchCategories();
+    // Wait until we have a token (or confirmed none) so admin always hits no-store path.
+    if (accessToken !== undefined) {
+      fetchCategories();
+    }
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [accessToken]);
 
   /*
    * =========================================================
@@ -657,16 +663,29 @@ export default function Categories() {
         );
       }
 
-      console.log(
-        "CATEGORY SAVE RESPONSE:",
-        response
-      );
-
       setSuccess(
         editingCategory
           ? "Category updated successfully."
           : "Category created successfully."
       );
+
+      // Optimistically update the list so the new/edited category shows immediately,
+      // then re-fetch with cache: "no-store" for the authoritative list.
+      if (response && response._id) {
+        setCategories((prev) => {
+          const normalized = normalizeCategories(
+            editingCategory
+              ? prev.map((c) =>
+                  String(c._id) === String(response._id) ? response : c
+                )
+              : [...prev, response]
+          );
+          // Keep alphabetical order like the API
+          return [...normalized].sort((a, b) =>
+            String(a.name || "").localeCompare(String(b.name || ""))
+          );
+        });
+      }
 
       await loadCategories();
 

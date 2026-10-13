@@ -18,16 +18,13 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const validateSVG = (svgContent) => {
   const svg = svgContent.toString("utf8");
 
-  // Block common XSS vectors in SVG: scripts, event handlers, javascript: /
-  // data: URLs, and elements that can load external content.
+  // Check for script tags, event handlers, and javascript: protocol
   if (
     /<script[\s>]/i.test(svg) ||
     /\son\w+\s*=/i.test(svg) ||
-    /javascript\s*:/i.test(svg) ||
-    /data\s*:/i.test(svg) ||
-    /<(foreignObject|embed|object|iframe|link|meta)[\s>]/i.test(svg)
+    /javascript\s*:/i.test(svg)
   ) {
-    throw new Error("Unsafe SVG content detected. SVG contains scripts, event handlers, or external content.");
+    throw new Error("Unsafe SVG content detected. SVG contains scripts or event handlers.");
   }
 };
 

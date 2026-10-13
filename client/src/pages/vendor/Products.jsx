@@ -113,7 +113,7 @@ export default function Products() {
       try {
         const [productsData, categoriesData, profile] = await Promise.all([
           loadProducts(),
-          api("/categories"),
+          api("/categories", { accessToken, cache: "no-store" }),
           api("/vendors/me", { accessToken }).catch(() => null),
         ]);
 

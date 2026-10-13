@@ -159,9 +159,13 @@ export const createCategory = async (req, res) => {
  */
 export const getCategories = async (req, res) => {
   try {
-    // Categories change infrequently. Allow the browser/CDN to reuse the
-    // response briefly while still revalidating regularly.
-    res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+    // Public storefront can cache briefly; authenticated admin must always
+    // see the latest list (otherwise a just-created category appears "missing").
+    if (req.headers.authorization) {
+      res.set("Cache-Control", "private, no-store, no-cache, must-revalidate");
+    } else {
+      res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
+    }
     const categories = await Category.find()
       .populate(
         "parentCategory",
