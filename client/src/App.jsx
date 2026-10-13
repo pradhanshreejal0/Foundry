@@ -26,8 +26,9 @@ import Users from "@/pages/admin/Users";
 import Settings from "@/pages/admin/Settings";
 import Home from "@/pages/customer/Home";
 import ProductDetails from "@/pages/customer/ProductDetail";
-import Login from "@/pages/auth/Login";
-import Register from "@/pages/auth/Register";
+import AuthPage from "@/pages/auth/AuthPage";
+import ForgotPassword from "@/pages/auth/ForgotPassword";
+import ResetPassword from "@/pages/auth/ResetPassword";
 import VendorDashboard from "@/pages/vendor/Dashboard";
 import AdminDashboard from "@/pages/admin/Dashboard";
 import Categories from "@/pages/admin/Categories";
@@ -43,8 +44,6 @@ import HelpCenter from "@/pages/HelpCenter";
 import Returns from "@/pages/Returns";
 import Shipping from "@/pages/Shipping";
 import FAQ from "@/pages/FAQ";
-import ForgotPassword from "@/pages/auth/ForgotPassword";
-import ResetPassword from "@/pages/auth/ResetPassword";
 import Vendors from "@/pages/admin/Vendors";
 
 // All page routes, grouped by who may see them: public/customer, auth pages, vendor, admin.
@@ -79,9 +78,10 @@ function App() {
         <Route path="/faq" element={<FAQ />} />
       </Route>
 
-      {/* Auth pages (no layout) */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      {/* Auth pages - unified coin flip auth page */}
+      <Route path="/login" element={<AuthPage />} />
+      <Route path="/register" element={<AuthPage />} />
+      <Route path="/auth" element={<AuthPage />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
 
