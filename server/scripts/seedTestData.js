@@ -13,31 +13,37 @@ const seedTestData = async () => {
     console.log("Connected to MongoDB for Test Seeding...");
 
     // 1. Create Super Admin
-    const adminEmail = "superadmin@foundry.com";
+    const adminEmail = process.env.ADMIN_EMAIL || "superadmin@gmail.com";
+    const adminPassword = process.env.ADMIN_PASSWORD || "SuperAdmin@123456";
+    const adminName = process.env.ADMIN_NAME || "Super Admin";
+
     let admin = await User.findOne({ email: adminEmail });
     if (!admin) {
       admin = await User.create({
-        name: "Super Admin",
+        name: adminName,
         email: adminEmail,
-        password: "AdminPassword123!",
+        password: adminPassword,
         role: "admin",
       });
-      console.log(`Created Super Admin: ${adminEmail} / AdminPassword123!`);
+      console.log(`Created Super Admin: ${adminEmail} / ${adminPassword}`);
     } else {
       console.log(`Super Admin already exists: ${adminEmail}`);
     }
 
     // 2. Create Test Vendor User & Vendor Store
-    const vendorEmail = "vendor@foundry.com";
+    const vendorEmail = process.env.VENDOR_EMAIL || "vendor@gmail.com";
+    const vendorPassword = process.env.VENDOR_PASSWORD || "Vendor@123456";
+    const vendorName = process.env.VENDOR_NAME || "Vendor Account";
+
     let vendorUser = await User.findOne({ email: vendorEmail });
     if (!vendorUser) {
       vendorUser = await User.create({
-        name: "Aura Artisan",
+        name: vendorName,
         email: vendorEmail,
-        password: "VendorPassword123!",
+        password: vendorPassword,
         role: "vendor",
       });
-      console.log(`Created Vendor User: ${vendorEmail} / VendorPassword123!`);
+      console.log(`Created Vendor User: ${vendorEmail} / ${vendorPassword}`);
     } else {
       console.log(`Vendor User already exists: ${vendorEmail}`);
     }
@@ -60,16 +66,19 @@ const seedTestData = async () => {
     }
 
     // 3. Create Test Customer Client
-    const customerEmail = "customer@foundry.com";
+    const customerEmail = process.env.CUSTOMER_EMAIL || "customer@foundry.com";
+    const customerPassword = process.env.CUSTOMER_PASSWORD || "CustomerPassword123!";
+    const customerName = process.env.CUSTOMER_NAME || "Test Customer";
+
     let customerUser = await User.findOne({ email: customerEmail });
     if (!customerUser) {
       customerUser = await User.create({
-        name: "Julian Sterling",
+        name: customerName,
         email: customerEmail,
-        password: "CustomerPassword123!",
+        password: customerPassword,
         role: "customer",
       });
-      console.log(`Created Test Customer: ${customerEmail} / CustomerPassword123!`);
+      console.log(`Created Test Customer: ${customerEmail} / ${customerPassword}`);
     } else {
       console.log(`Test Customer already exists: ${customerEmail}`);
     }
@@ -194,9 +203,9 @@ const seedTestData = async () => {
     console.log("\n==============================================");
     console.log("✅ Test Data Seeding Completed Successfully!");
     console.log("----------------------------------------------");
-    console.log("Super Admin Login : superadmin@foundry.com / AdminPassword123!");
-    console.log("Vendor User Login : vendor@foundry.com / VendorPassword123!");
-    console.log("Customer Client   : customer@foundry.com / CustomerPassword123!");
+    console.log(`Super Admin Login : ${adminEmail} / ${adminPassword}`);
+    console.log(`Vendor User Login : ${vendorEmail} / ${vendorPassword}`);
+    console.log(`Customer Client   : ${customerEmail} / ${customerPassword}`);
     console.log("==============================================");
     process.exit(0);
   } catch (error) {
