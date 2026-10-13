@@ -1,0 +1,559 @@
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+
+import {
+  ShoppingCart,
+  Menu,
+  User,
+  UserCircle2,
+  Heart,
+  Package,
+  MessageCircle,
+  LogOut,
+  ChevronRight,
+} from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import SearchBox from "@/components/SearchBox";
+
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/ThemeToggle";
+
+import { useAuth } from "@/context/AuthContext";
+import { useCart } from "@/context/CartContext";
+import { api } from "@/lib/api";
+import { CategoryIcon } from "../CategoryIcon";
+
+export default function Navbar() {
+  const [categories, setCategories] = useState([]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showCategoryNav, setShowCategoryNav] = useState(true);
+  const previousScrollY = useRef(0);
+  const scrollDelta = useRef(0);
+
+  const { user, logout } = useAuth();
+  const { itemCount } = useCart();
+
+  const messagesLink = user?.role === "vendor" ? "/vendor/chats" : "/chats";
+
+  // =========================================================
+  // LOAD CATEGORIES (limited to six parent categories)
+  // =========================================================
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadCategories = async () => {
+      try {
+        const data = await api("/categories");
+
+        if (cancelled) {
+          return;
+        }
+
+        // Filter to parent categories and limit for cleaner mobile menu
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.data)
+            ? data.data
+            : Array.isArray(data?.categories)
+              ? data.categories
+              : [];
+        const parentCategories = list
+          .filter((category) => !category.parentCategory)
+          .slice(0, 6);
+
+        setCategories(parentCategories);
+      } catch (error) {
+        console.error("Failed to load categories:", error);
+
+        if (!cancelled) {
+          setCategories([]);
+        }
+      }
+    };
+
+    loadCategories();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let frame = 0;
+
+    const handleScroll = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        const currentScrollY = window.scrollY;
+        const delta = currentScrollY - previousScrollY.current;
+        previousScrollY.current = currentScrollY;
+
+        if (currentScrollY <= 24) {
+          scrollDelta.current = 0;
+          setShowCategoryNav(true);
+          return;
+        }
+
+        scrollDelta.current = delta === 0 || Math.sign(delta) === Math.sign(scrollDelta.current)
+          ? scrollDelta.current + delta
+          : delta;
+
+        if (scrollDelta.current > 12) {
+          setShowCategoryNav(false);
+          scrollDelta.current = 0;
+        } else if (scrollDelta.current < -12) {
+          setShowCategoryNav(true);
+          scrollDelta.current = 0;
+        }
+      });
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  // =========================================================
+  // LOGOUT
+  // =========================================================
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
+  // =========================================================
+  // RENDER
+  // =========================================================
+
+  return (
+    <header className="sticky top-0 z-50 w-full bg-background shadow-sm">
+      {/* =====================================================
+          MAIN NAVBAR
+      ===================================================== */}
+
+      <div className="border-b bg-background">
+        <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-3 sm:px-4 lg:h-17 lg:gap-5">
+          {/* =================================================
+              MOBILE MENU
+          ================================================= */}
+
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0 rounded-full lg:hidden"
+                aria-label="Open menu"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+
+            <SheetContent side="left" className="w-75 sm:w-87">
+              <div className="mt-6 flex flex-col">
+                {/* Mobile Brand */}
+
+                <div className="mb-6 flex items-center justify-between gap-2">
+                  <Link to="/" className="flex items-center gap-2">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-[10px] rounded-bl-sm bg-primary font-heading text-[21px] font-extrabold tracking-tighter text-primary-foreground">
+                      W
+                    </span>
+
+                    <span className="font-heading text-xl font-extrabold tracking-tight">Foundry</span>
+                  </Link>
+
+                  <ThemeToggle />
+                </div>
+
+                {/* Mobile Navigation */}
+
+                <div className="space-y-1">
+                  <Link
+                    to="/"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between rounded-lg px-3 py-3 text-sm font-medium hover:bg-muted"
+                  >
+                    <span>Home</span>
+
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </Link>
+
+                  <Link
+                    to="/products"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between rounded-lg px-3 py-3 text-sm font-medium hover:bg-muted"
+                  >
+                    <span>Shop</span>
+
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </Link>
+
+                  <Link
+                    to="/categories"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between rounded-lg px-3 py-3 text-sm font-medium hover:bg-muted"
+                  >
+                    <span>All Categories</span>
+
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </Link>
+                </div>
+
+                {/* Mobile Categories - collapsed by default for cleaner look */}
+                {categories.length > 0 && (
+                  <div className="mt-5 border-t pt-4">
+                    <p className="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Categories
+                    </p>
+
+                    <div className="space-y-1">
+                      {categories.map((cat) => (
+                        <Link
+                          key={cat._id}
+                          to={`/products?category=${cat._id}`}
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                          }}
+                          className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-muted"
+                        >
+                          <CategoryIcon category={cat} size="sm" />
+
+                          <span className="text-sm font-medium">
+                            {cat.name}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Mobile Account */}
+
+                <div className="mt-6 border-t pt-4">
+                  {user ? (
+                    <div className="space-y-1">
+                      <Link
+                        to="/profile"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium hover:bg-muted"
+                      >
+                        <User className="h-4 w-4" />
+                        My Profile
+                      </Link>
+
+                      <Link
+                        to="/orders"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium hover:bg-muted"
+                      >
+                        <Package className="h-4 w-4" />
+                        My Orders
+                      </Link>
+
+                      <Link
+                        to="/wishlist"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium hover:bg-muted"
+                      >
+                        <Heart className="h-4 w-4" />
+                        Wishlist
+                      </Link>
+
+                      <Link
+                        to={messagesLink}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium hover:bg-muted"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        Messages
+                      </Link>
+
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-destructive hover:bg-destructive/10"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Logout
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Button asChild className="w-full rounded-lg">
+                        <Link
+                          to="/login"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <User className="mr-2 h-4 w-4" />
+                          Sign In
+                        </Link>
+                      </Button>
+
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="w-full rounded-lg"
+                      >
+                        <Link
+                          to="/register"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          Sign Up
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          {/* =================================================
+              LOGO
+          ================================================= */}
+
+          <Link to="/" className="flex shrink-0 items-center gap-2">
+            <span className="flex h-9 w-9 items-center justify-center rounded-[10px] rounded-bl-sm bg-primary font-heading text-[21px] font-extrabold tracking-tighter text-primary-foreground">
+              F
+            </span>
+
+            <span className="hidden font-heading text-lg font-extrabold tracking-tight sm:block lg:text-xl">
+              Foundry
+            </span>
+          </Link>
+
+          {/* =================================================
+              DESKTOP SEARCH
+          ================================================= */}
+
+          <div className="hidden min-w-0 flex-1 md:block">
+            <SearchBox variant="desktop" />
+          </div>
+
+          {/* =================================================
+              DESKTOP ACTIONS
+          ================================================= */}
+
+          <div className="hidden items-center gap-2 md:flex">
+            {/* Theme */}
+
+            <ThemeToggle className="mr-1" />
+
+            {/* Wishlist */}
+
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 rounded-lg px-2.5"
+            >
+              <Link to="/wishlist">
+                <Heart className="h-4 w-4" />
+
+                <span className="hidden lg:inline">Wishlist</span>
+              </Link>
+            </Button>
+
+            {/* Cart */}
+
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="relative gap-1.5 rounded-lg px-2.5"
+            >
+              <Link to="/cart">
+                <ShoppingCart className="h-4 w-4" />
+
+                <span className="hidden lg:inline">Cart</span>
+
+                {itemCount > 0 && (
+                  <Badge className="absolute -right-1 -top-2 h-5 min-w-5 justify-center rounded-full px-1 text-[10px]">
+                    {itemCount}
+                  </Badge>
+                )}
+              </Link>
+            </Button>
+
+            {/* Account */}
+
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 rounded-lg"
+                  >
+                    <User className="h-4 w-4" />
+
+                    <span className="hidden lg:inline">Account</span>
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile">
+                      <User className="mr-2 h-4 w-4" />
+                      My Profile
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem asChild>
+                    <Link to="/orders">
+                      <Package className="mr-2 h-4 w-4" />
+                      My Orders
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem asChild>
+                    <Link to="/wishlist">
+                      <Heart className="mr-2 h-4 w-4" />
+                      Wishlist
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem asChild>
+                    <Link to={messagesLink}>
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                      Messages
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-lg"
+                >
+                  <Link to="/login">Sign In</Link>
+                </Button>
+
+                <Button asChild size="sm" className="rounded-lg">
+                  <Link to="/register">
+                    <User className="mr-1.5 h-4 w-4" />
+                    Sign Up
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* =================================================
+              MOBILE ACTIONS
+          ================================================= */}
+
+          <div className="ml-auto flex items-center gap-1.5 md:hidden">
+            <ThemeToggle />
+
+            {user ? (
+              <Button
+                asChild
+                variant="ghost"
+                size="icon"
+                className="rounded-full"
+                aria-label="Account"
+              >
+                <Link to="/profile">
+                  <UserCircle2 className="h-6 w-6" />
+                </Link>
+              </Button>
+            ) : (
+              <Button asChild size="sm" className="rounded-lg">
+                <Link to="/login">Sign In</Link>
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* =====================================================
+          MOBILE SEARCH ROW
+      ===================================================== */}
+
+      <div className="border-b bg-background px-3 py-2 sm:px-4 md:hidden">
+        <SearchBox variant="mobile" />
+      </div>
+
+      {/* Compact category links stay below the main navigation and reappear near the page top or while scrolling upward. */}
+      {categories.length > 0 && (
+        <nav
+          aria-label="Shop by category"
+          className={`hidden border-b bg-background transition-[transform,opacity] duration-200 motion-reduce:transition-none md:block ${
+            showCategoryNav
+              ? "translate-y-0 opacity-100"
+              : "pointer-events-none -translate-y-full opacity-0"
+          }`}
+        >
+          <div className="mx-auto flex h-10 max-w-7xl items-center gap-1 overflow-x-auto px-3 sm:px-4 lg:px-8">
+            <Link
+              to="/categories"
+              className="shrink-0 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              All categories
+            </Link>
+            {categories.map((category) => (
+              <Link
+                key={category._id}
+                to={`/products?category=${category._id}`}
+                className="shrink-0 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                {category.name}
+              </Link>
+            ))}
+          </div>
+        </nav>
+      )}
+
+      {/* =====================================================
+          FLOATING MOBILE CART BUTTON
+      ===================================================== */}
+
+      <Link
+        to="/cart"
+        aria-label="View cart"
+        className="fixed bottom-5 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 md:hidden"
+      >
+        <ShoppingCart className="h-6 w-6" />
+
+        {itemCount > 0 && (
+          <Badge className="absolute -right-1 -top-1 h-5 min-w-5 justify-center rounded-full border-2 border-background px-1 text-[10px]">
+            {itemCount}
+          </Badge>
+        )}
+      </Link>
+    </header>
+  );
+}
