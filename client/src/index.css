@@ -4,6 +4,77 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* =========================================================
+   SCROLL ANIMATIONS
+   ========================================================= */
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Scroll animation utility classes */
+.scroll-fade-in-up {
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.scroll-fade-in-down {
+    animation: fadeInDown 0.8s ease-out;
+}
+
+.scroll-fade-in-left {
+    animation: fadeInLeft 0.8s ease-out;
+}
+
+.scroll-fade-in-right {
+    animation: fadeInRight 0.8s ease-out;
+}
+
+/* Observer state - initially hidden */
+[data-scroll-animate] {
+    opacity: 0;
+    transform: translateY(30px);
+}
+
 @theme inline {
     --font-heading: "Manrope", "DM Sans", sans-serif;
     --font-sans: "DM Sans", system-ui, sans-serif;
