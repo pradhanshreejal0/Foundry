@@ -5,9 +5,15 @@
   "main": "index.js",
   "scripts": {
     "server": "cd server && npm run dev",
+    "server:pnpm": "cd server && pnpm run dev",
     "client": "cd client && npm run dev",
+    "client:pnpm": "cd client && pnpm run dev",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "dev:pnpm": "concurrently \"pnpm run server:pnpm\" \"pnpm run client:pnpm\"",
     "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "install:all:pnpm": "pnpm install --recursive",
+    "build": "cd client && npm run build",
+    "build:pnpm": "cd client && pnpm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
