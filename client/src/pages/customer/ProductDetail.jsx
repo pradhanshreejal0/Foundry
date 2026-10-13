@@ -9,7 +9,7 @@ import { ProductReviews } from "@/components/ProductReviews";
 import { PriceTag } from "@/components/PriceTag";
 import { cn, getFinalPrice } from "@/lib/utils";
 import { cloudinaryImage } from "@/lib/cloudinary";
-import { Heart, MessageCircle, Sparkles, Package } from "lucide-react";
+import { Heart, MessageCircle, Sparkles, Package, Plus, Minus, Zap } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -242,14 +242,16 @@ export default function ProductDetails() {
     };
   }, [user, accessToken, id]);
 
-  const handleAddToCart = async () => {
+  const [quantity, setQuantity] = useState(1);
+
+  const handleBuyNow = async () => {
     if (!user) {
       navigate("/login");
       return;
     }
 
     if (user.role !== "customer") {
-      setMessage("Only customers can add products to cart.");
+      setMessage("Only customers can buy products.");
       return;
     }
 
@@ -273,7 +275,7 @@ export default function ProductDetails() {
     setWishlistMsg("");
 
     try {
-      await addToCart(product._id, 1, selectedVariantKey || "");
+      await addToCart(product._id, quantity, selectedVariantKey || "");
       setMessage("Added to cart!");
     } catch (err) {
       setMessage(err.message || "Failed to add product to cart.");
@@ -1029,39 +1031,78 @@ export default function ProductDetails() {
             })()}
           </div>
 
-          {/* Actions */}
-          <div className="mt-8 flex gap-3">
+          {/* Quantity & Actions */}
+          <div className="mt-8 space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium">Quantity:</span>
+              <div className="flex items-center rounded-lg border border-border bg-card">
+                <button
+                  type="button"
+                  className="flex h-9 w-9 items-center justify-center text-muted-foreground transition hover:text-foreground disabled:opacity-40"
+                  disabled={quantity <= 1}
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  aria-label="Decrease quantity"
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                </button>
+                <span className="w-10 text-center text-sm font-semibold">
+                  {quantity}
+                </span>
+                <button
+                  type="button"
+                  className="flex h-9 w-9 items-center justify-center text-muted-foreground transition hover:text-foreground"
+                  onClick={() => setQuantity((q) => q + 1)}
+                  aria-label="Increase quantity"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
 
-            {/* Add to Cart */}
-            <Button
-              className="flex-1"
-              size="lg"
-              disabled={adding}
-              onClick={handleAddToCart}
-            >
-              {adding ? "Adding..." : "Add to Cart"}
-            </Button>
+            <div className="flex gap-3">
+              {/* Add to Cart */}
+              <Button
+                className="flex-1"
+                size="lg"
+                disabled={adding}
+                onClick={handleAddToCart}
+              >
+                {adding ? "Adding..." : "Add to Cart"}
+              </Button>
 
-            {/* Wishlist */}
-            <Button
-              variant="outline"
-              size="lg"
-              disabled={wishlistLoading}
-              onClick={handleAddToWishlist}
-              aria-label={
-                isWishlisted
-                  ? "Remove from wishlist"
-                  : "Add to wishlist"
-              }
-            >
-              <Heart
-                className={
+              {/* Buy Now */}
+              <Button
+                variant="default"
+                className="flex-1 bg-primary text-primary-foreground hover:opacity-90"
+                size="lg"
+                disabled={adding}
+                onClick={handleBuyNow}
+              >
+                <Zap className="mr-1.5 h-4 w-4" />
+                Buy Now
+              </Button>
+
+              {/* Wishlist */}
+              <Button
+                variant="outline"
+                size="lg"
+                disabled={wishlistLoading}
+                onClick={handleAddToWishlist}
+                aria-label={
                   isWishlisted
-                    ? "fill-destructive text-destructive"
-                    : ""
+                    ? "Remove from wishlist"
+                    : "Add to wishlist"
                 }
-              />
-            </Button>
+              >
+                <Heart
+                  className={
+                    isWishlisted
+                      ? "fill-destructive text-destructive"
+                      : ""
+                  }
+                />
+              </Button>
+            </div>
           </div>
 
           {/* Cart message */}
