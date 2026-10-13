@@ -53,14 +53,14 @@ const seedTestData = async () => {
       vendorStore = await Vendor.create({
         user: vendorUser._id,
         storeName: "Aura Luxury Goods",
-        storeSlug: "aura-luxury-goods",
-        slug: "aura-luxury-goods",
+        storeSlug: `aura-luxury-goods-${Date.now()}`,
+        slug: `aura-luxury-goods-${Date.now()}`,
         storeDescription: "Curated heirloom-quality lifestyle goods and refined accessories.",
         status: "approved",
         contactEmail: vendorEmail,
         phone: "+1555019283",
       });
-      console.log("Created Vendor Store: Aura Luxury Goods (storeSlug: aura-luxury-goods)");
+      console.log(`Created Vendor Store: Aura Luxury Goods (storeSlug: ${vendorStore.storeSlug})`);
     } else {
       console.log("Vendor Store already exists.");
     }
