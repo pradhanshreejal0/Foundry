@@ -244,6 +244,46 @@ export default function ProductDetails() {
 
   const [quantity, setQuantity] = useState(1);
 
+  const handleAddToCart = async () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    if (user.role !== "customer") {
+      setMessage("Only customers can add products to cart.");
+      return;
+    }
+
+    if (!product?._id) {
+      setMessage("Product information is missing.");
+      return;
+    }
+
+    if (
+      product.hasVariants &&
+      Array.isArray(product.variants) &&
+      product.variants.length > 0 &&
+      !selectedVariantKey
+    ) {
+      setMessage("Please select an option (size, color, etc.).");
+      return;
+    }
+
+    setAdding(true);
+    setMessage("");
+    setWishlistMsg("");
+
+    try {
+      await addToCart(product._id, quantity, selectedVariantKey || "");
+      setMessage("Added to cart!");
+    } catch (err) {
+      setMessage(err.message || "Failed to add product to cart.");
+    } finally {
+      setAdding(false);
+    }
+  };
+
   const handleBuyNow = async () => {
     if (!user) {
       navigate("/login");
@@ -276,9 +316,9 @@ export default function ProductDetails() {
 
     try {
       await addToCart(product._id, quantity, selectedVariantKey || "");
-      setMessage("Added to cart!");
+      navigate("/checkout");
     } catch (err) {
-      setMessage(err.message || "Failed to add product to cart.");
+      setMessage(err.message || "Failed to proceed to checkout.");
     } finally {
       setAdding(false);
     }
