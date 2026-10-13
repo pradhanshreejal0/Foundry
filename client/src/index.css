@@ -77,37 +77,37 @@
 }
 
 /* =========================================================
-   LUXURIOUS DARK & GOLD THEME
+   EMERALD & SILVER THEME
    ========================================================= */
 
 :root {
-    --background: #0b0d10;
-    --foreground: #f3f4f6;
+    --background: #0f1419;
+    --foreground: #e8eaed;
 
-    --card: #141820;
-    --card-foreground: #f3f4f6;
+    --card: #1a1f2e;
+    --card-foreground: #e8eaed;
 
-    --popover: #141820;
-    --popover-foreground: #f3f4f6;
+    --popover: #1a1f2e;
+    --popover-foreground: #e8eaed;
 
-    --primary: #d4af37;
-    --primary-foreground: #0b0d10;
+    --primary: #10b981;
+    --primary-foreground: #0f1419;
 
-    --secondary: #1f2430;
-    --secondary-foreground: #f3f4f6;
+    --secondary: #374151;
+    --secondary-foreground: #e8eaed;
 
-    --muted: #1f2430;
+    --muted: #4b5563;
     --muted-foreground: #9ca3af;
 
-    --accent: #d4af37;
-    --accent-foreground: #0b0d10;
+    --accent: #06b6d4;
+    --accent-foreground: #0f1419;
 
     --destructive: #ef4444;
     --destructive-foreground: #ffffff;
 
-    --border: #262d3d;
-    --input: #262d3d;
-    --ring: #d4af37;
+    --border: #2d3748;
+    --input: #2d3748;
+    --ring: #10b981;
 
     --success: #10b981;
     --success-foreground: #ffffff;
@@ -120,40 +120,40 @@
 
     --radius: 0.75rem;
 
-    --sidebar: #10131a;
-    --sidebar-foreground: #f3f4f6;
-    --sidebar-primary: #d4af37;
-    --sidebar-primary-foreground: #0b0d10;
-    --sidebar-accent: #1f2430;
-    --sidebar-accent-foreground: #f3f4f6;
-    --sidebar-border: #262d3d;
-    --sidebar-ring: #d4af37;
+    --sidebar: #111827;
+    --sidebar-foreground: #e8eaed;
+    --sidebar-primary: #10b981;
+    --sidebar-primary-foreground: #0f1419;
+    --sidebar-accent: #374151;
+    --sidebar-accent-foreground: #e8eaed;
+    --sidebar-border: #2d3748;
+    --sidebar-ring: #10b981;
 
-    --chart-1: #d4af37;
-    --chart-2: #e5c158;
-    --chart-3: #10b981;
+    --chart-1: #10b981;
+    --chart-2: #06b6d4;
+    --chart-3: #8b5cf6;
     --chart-4: #3b82f6;
-    --chart-5: #f59e0b;
+    --chart-5: #ec4899;
 }
 
 .dark {
-    --background: #0b0d10;
-    --foreground: #f3f4f6;
-    --card: #141820;
-    --card-foreground: #f3f4f6;
-    --popover: #141820;
-    --popover-foreground: #f3f4f6;
-    --primary: #d4af37;
-    --primary-foreground: #0b0d10;
-    --secondary: #1f2430;
-    --secondary-foreground: #f3f4f6;
-    --muted: #1f2430;
+    --background: #0f1419;
+    --foreground: #e8eaed;
+    --card: #1a1f2e;
+    --card-foreground: #e8eaed;
+    --popover: #1a1f2e;
+    --popover-foreground: #e8eaed;
+    --primary: #10b981;
+    --primary-foreground: #0f1419;
+    --secondary: #374151;
+    --secondary-foreground: #e8eaed;
+    --muted: #4b5563;
     --muted-foreground: #9ca3af;
-    --accent: #d4af37;
-    --accent-foreground: #0b0d10;
-    --border: #262d3d;
-    --input: #262d3d;
-    --ring: #d4af37;
+    --accent: #06b6d4;
+    --accent-foreground: #0f1419;
+    --border: #2d3748;
+    --input: #2d3748;
+    --ring: #10b981;
 }
 
 body {
@@ -163,18 +163,18 @@ body {
     overflow-x: hidden;
 }
 
-/* Custom scrollbar for luxurious feel */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 ::-webkit-scrollbar-track {
-    background: #0b0d10;
+    background: #0f1419;
 }
 ::-webkit-scrollbar-thumb {
-    background: #262d3d;
+    background: #2d3748;
     border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #d4af37;
+    background: #10b981;
 }
