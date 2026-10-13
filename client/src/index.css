@@ -137,23 +137,57 @@
 }
 
 .dark {
-    --background: #ffffff;
-    --foreground: #111827;
-    --card: #ffffff;
-    --card-foreground: #111827;
-    --popover: #ffffff;
-    --popover-foreground: #111827;
-    --primary: #0b3c2a;
-    --primary-foreground: #ffffff;
-    --secondary: #e5e7eb;
-    --secondary-foreground: #111827;
-    --muted: #d1d5db;
-    --muted-foreground: #6b7280;
-    --accent: #0b3c2a;
-    --accent-foreground: #ffffff;
-    --border: #e5e7eb;
-    --input: #f3f4f6;
-    --ring: #0b3c2a;
+    --background: #0f172a;
+    --foreground: #f0f9f7;
+
+    --card: #1a2332;
+    --card-foreground: #f0f9f7;
+
+    --popover: #1a2332;
+    --popover-foreground: #f0f9f7;
+
+    --primary: #4ade80;
+    --primary-foreground: #0f172a;
+
+    --secondary: #1f2937;
+    --secondary-foreground: #f0f9f7;
+
+    --muted: #374151;
+    --muted-foreground: #9ca3af;
+
+    --accent: #6ee7b7;
+    --accent-foreground: #0f172a;
+
+    --destructive: #f87171;
+    --destructive-foreground: #0f172a;
+
+    --border: #2d3e52;
+    --input: #1f2937;
+    --ring: #4ade80;
+
+    --success: #10b981;
+    --success-foreground: #0f172a;
+
+    --warning: #fbbf24;
+    --warning-foreground: #0f172a;
+
+    --info: #60a5fa;
+    --info-foreground: #0f172a;
+
+    --sidebar: #111827;
+    --sidebar-foreground: #f0f9f7;
+    --sidebar-primary: #4ade80;
+    --sidebar-primary-foreground: #0f172a;
+    --sidebar-accent: #1f2937;
+    --sidebar-accent-foreground: #f0f9f7;
+    --sidebar-border: #2d3e52;
+    --sidebar-ring: #4ade80;
+
+    --chart-1: #4ade80;
+    --chart-2: #6ee7b7;
+    --chart-3: #34d399;
+    --chart-4: #10b981;
+    --chart-5: #059669;
 }
 
 body {
@@ -168,13 +202,24 @@ body {
     width: 8px;
     height: 8px;
 }
-::-webkit-scrollbar-track {
+:root ::-webkit-scrollbar-track {
     background: #f9fafb;
 }
-::-webkit-scrollbar-thumb {
+:root ::-webkit-scrollbar-thumb {
     background: #e5e7eb;
     border-radius: 4px;
 }
-::-webkit-scrollbar-thumb:hover {
+:root ::-webkit-scrollbar-thumb:hover {
     background: #0b3c2a;
+}
+
+.dark ::-webkit-scrollbar-track {
+    background: #111827;
+}
+.dark ::-webkit-scrollbar-thumb {
+    background: #2d3e52;
+    border-radius: 4px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #4ade80;
 }
