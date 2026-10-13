@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import {
   Search,
   LayoutGrid,
@@ -7,6 +7,8 @@ import {
   X,
   SlidersHorizontal,
   ArrowUpDown,
+  Plus,
+  Zap,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { cloudinaryImage } from "@/lib/cloudinary";
@@ -16,6 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/context/AuthContext";
+import { useCart } from "@/context/CartContext";
 import {
   Select,
   SelectContent,
@@ -25,6 +29,10 @@ import {
 } from "@/components/ui/select";
 
 export default function Shop() {
+  const navigate = useNavigate();
+  const { user, accessToken } = useAuth();
+  const { addToCart } = useCart();
+  const [actionLoadingId, setActionLoadingId] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryId = searchParams.get("category") || "";
   const qParam = searchParams.get("q") || "";
@@ -479,17 +487,19 @@ export default function Shop() {
           {displayedProducts.map((product) => {
             const image = getImage(product);
             return (
-              <Link
+              <div
                 key={product._id}
-                to={`/products/${product._id}`}
-                className="group relative overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10"
+                className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10"
               >
                 {Number(product.discountPercentage || 0) > 0 && (
                   <div className="absolute left-2 top-2 z-10 rounded bg-primary px-2 py-1 text-xs font-bold text-primary-foreground shadow-sm">
                     {product.discountPercentage}% OFF
                   </div>
                 )}
-                <div className="aspect-square overflow-hidden bg-muted">
+                <Link
+                  to={`/products/${product._id}`}
+                  className="aspect-square overflow-hidden bg-muted block"
+                >
                   {image ? (
                     <img
                       src={cloudinaryImage(image, { width: 400 })}
@@ -504,16 +514,80 @@ export default function Shop() {
                       No image
                     </div>
                   )}
-                </div>
-                <div className="p-3">
-                  <h3 className="min-h-10 line-clamp-2 text-sm font-medium">
-                    {product.title}
-                  </h3>
-                  <div className="mt-2">
+                </Link>
+                <div className="flex flex-1 flex-col p-3">
+                  <Link to={`/products/${product._id}`}>
+                    <h3 className="min-h-10 line-clamp-2 text-sm font-medium hover:text-primary">
+                      {product.title}
+                    </h3>
+                  </Link>
+                  <div className="mt-2 flex items-center justify-between">
                     <PriceTag product={product} />
                   </div>
+
+                  <div className="mt-3 flex items-center gap-2 pt-2 border-t border-border/50">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 gap-1 text-xs h-8"
+                      disabled={actionLoadingId === product._id}
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        if (!user) {
+                          navigate("/login");
+                          return;
+                        }
+                        if (user.role !== "customer") {
+                          alert("Only customers can add items to cart");
+                          return;
+                        }
+                        try {
+                          setActionLoadingId(product._id);
+                          await addToCart(product._id, 1, "");
+                          alert("Added to cart successfully!");
+                        } catch (err) {
+                          alert(err.message || "Failed to add to cart");
+                        } finally {
+                          setActionLoadingId(null);
+                        }
+                      }}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Add
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="flex-1 gap-1 text-xs h-8"
+                      disabled={actionLoadingId === product._id}
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        if (!user) {
+                          navigate("/login");
+                          return;
+                        }
+                        if (user.role !== "customer") {
+                          alert("Only customers can checkout");
+                          return;
+                        }
+                        try {
+                          setActionLoadingId(product._id);
+                          await addToCart(product._id, 1, "");
+                          navigate("/checkout");
+                        } catch (err) {
+                          alert(err.message || "Failed to proceed to checkout");
+                        } finally {
+                          setActionLoadingId(null);
+                        }
+                      }}
+                    >
+                      <Zap className="h-3.5 w-3.5" />
+                      Buy
+                    </Button>
+                  </div>
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>
