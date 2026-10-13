@@ -12,7 +12,14 @@ import {
 } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
-import { Eye, EyeOff, Store, User, LogIn, UserPlus } from "lucide-react";
+import { Eye, EyeOff, Store, User, LogIn, UserPlus, Shield, Zap } from "lucide-react";
+
+// Demo credentials for testing
+const DEMO_ACCOUNTS = {
+  admin: { email: "superadmin@gmail.com", password: "SuperAdmin@123456" },
+  vendor: { email: "vendor@gmail.com", password: "Vendor@123456" },
+  customer: { email: "customer@foundry.com", password: "CustomerPassword123!" },
+};
 
 export default function AuthPage() {
   const [searchParams] = useSearchParams();
@@ -51,6 +58,29 @@ export default function AuthPage() {
       setMode(newMode);
       setIsFlipping(false);
     }, 600);
+  };
+
+  const handleQuickLogin = async (accountType) => {
+    const credentials = DEMO_ACCOUNTS[accountType];
+    setLoginError("");
+    setLoginLoading(true);
+
+    try {
+      const data = await api("/auth/login", {
+        method: "POST",
+        body: credentials,
+      });
+
+      login(data.user, data.accessToken);
+
+      if (data.user.role === "admin") navigate("/admin");
+      else if (data.user.role === "vendor") navigate("/vendor");
+      else navigate("/");
+    } catch (err) {
+      setLoginError(err.message || "Login failed");
+    } finally {
+      setLoginLoading(false);
+    }
   };
 
   // Login handlers
@@ -230,6 +260,46 @@ export default function AuthPage() {
                     >
                       {loginLoading ? "Logging in..." : "Sign In"}
                     </Button>
+
+                    {/* Demo Accounts */}
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground">Demo Accounts:</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleQuickLogin("admin")}
+                          disabled={loginLoading}
+                          className="text-xs"
+                        >
+                          <Shield className="mr-1 h-3 w-3" />
+                          Admin
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleQuickLogin("vendor")}
+                          disabled={loginLoading}
+                          className="text-xs"
+                        >
+                          <Store className="mr-1 h-3 w-3" />
+                          Vendor
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleQuickLogin("customer")}
+                          disabled={loginLoading}
+                          className="text-xs"
+                        >
+                          <User className="mr-1 h-3 w-3" />
+                          Customer
+                        </Button>
+                      </div>
+                    </div>
                   </form>
 
                   <div className="relative my-6">
