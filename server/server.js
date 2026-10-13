@@ -106,11 +106,12 @@ app.get("/health", (req, res) => {
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
+  "https://foundry-ruby.vercel.app",
   "https://final-ecommerce-website-three.vercel.app",
   "https://finalecommercewebsite.vercel.app",
   process.env.CLIENT_URL?.replace(/^["']|["']$/g, ""),
 ].filter(Boolean);
-const vercelPreview = /^https:\/\/final-ecommerce-website-[a-z0-9-]+\.vercel\.app$/i;
+const vercelPreview = /^https:\/\/(foundry|final-ecommerce-website)-[a-z0-9-]+\.vercel\.app$/i;
 
 app.use(
   cors({
