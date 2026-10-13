@@ -2,7 +2,7 @@
   "name": "foundry-server",
   "version": "1.0.0",
   "description": "Foundry multi-vendor ecommerce API",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "node --check server.js",
     "start": "node server.js",

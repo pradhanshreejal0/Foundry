@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { uploadImage } from "@/lib/upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader2, Upload } from "lucide-react";
+import ImageUploader from "@/components/admin/ImageUploader";
 
 const DEFAULT_HERO = {
   visible: true,
@@ -47,8 +46,6 @@ export default function Settings() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
-  const [uploadingHero, setUploadingHero] = useState(false);
-  const [uploadingPromo, setUploadingPromo] = useState(false);
 
   const [form, setForm] = useState({
     commissionPercentage: 10,
@@ -110,22 +107,18 @@ export default function Settings() {
     }));
   };
 
-  const handleImageUpload = async (file, kind) => {
-    if (!file || !accessToken) return;
-    const setUploading = kind === "hero" ? setUploadingHero : setUploadingPromo;
-    setUploading(true);
-    setError("");
-    try {
-      const url = await uploadImage(file, accessToken);
-      setForm((prev) => ({
-        ...prev,
-        [kind]: { ...prev[kind], imageUrl: url },
-      }));
-    } catch (err) {
-      setError(err.message || "Image upload failed");
-    } finally {
-      setUploading(false);
-    }
+  const handleHeroImageUpload = (url) => {
+    setForm((prev) => ({
+      ...prev,
+      hero: { ...prev.hero, imageUrl: url },
+    }));
+  };
+
+  const handlePromoImageUpload = (url) => {
+    setForm((prev) => ({
+      ...prev,
+      promo: { ...prev.promo, imageUrl: url },
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -255,37 +248,12 @@ export default function Settings() {
 
             <div className="space-y-2">
               <Label>Hero image</Label>
-              {form.hero.imageUrl && (
-                <img
-                  src={form.hero.imageUrl}
-                  alt="Hero preview"
-                  className="h-36 w-full rounded-md object-cover border"
-                />
-              )}
-              <div className="flex flex-wrap items-center gap-2">
-                <Input
-                  value={form.hero.imageUrl || ""}
-                  onChange={handleHeroChange("imageUrl")}
-                  placeholder="Image URL"
-                />
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted">
-                  {uploadingHero ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <Upload className="size-4" />
-                  )}
-                  Upload
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    disabled={uploadingHero}
-                    onChange={(e) =>
-                      handleImageUpload(e.target.files?.[0], "hero")
-                    }
-                  />
-                </label>
-              </div>
+              <ImageUploader
+                onUpload={handleHeroImageUpload}
+                imageUrl={form.hero.imageUrl}
+                label="Upload Hero Image"
+                accessToken={accessToken}
+              />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -361,37 +329,12 @@ export default function Settings() {
 
             <div className="space-y-2">
               <Label>Promo image</Label>
-              {form.promo.imageUrl && (
-                <img
-                  src={form.promo.imageUrl}
-                  alt="Promo preview"
-                  className="h-36 w-full rounded-md object-cover border"
-                />
-              )}
-              <div className="flex flex-wrap items-center gap-2">
-                <Input
-                  value={form.promo.imageUrl || ""}
-                  onChange={handlePromoChange("imageUrl")}
-                  placeholder="Image URL"
-                />
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted">
-                  {uploadingPromo ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <Upload className="size-4" />
-                  )}
-                  Upload
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    disabled={uploadingPromo}
-                    onChange={(e) =>
-                      handleImageUpload(e.target.files?.[0], "promo")
-                    }
-                  />
-                </label>
-              </div>
+              <ImageUploader
+                onUpload={handlePromoImageUpload}
+                imageUrl={form.promo.imageUrl}
+                label="Upload Promo Image"
+                accessToken={accessToken}
+              />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">

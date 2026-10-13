@@ -1,12 +1,23 @@
 import multer from "multer";
 
+// Allowed image MIME types
+const ALLOWED_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/svg+xml",
+  "image/bmp",
+  "image/tiff",
+];
+
 // Files are kept in memory (not on disk) and then sent on to Cloudinary.
-// Only raster images up to 5 MB; SVG is blocked because it can contain scripts.
+// Supports raster images (JPEG, PNG, WebP, GIF, BMP, TIFF) and vector images (SVG).
 export const upload = multer({
   storage: multer.memoryStorage(),
   fileFilter: (req, file, cb) =>
-    file.mimetype.startsWith("image/") && file.mimetype !== "image/svg+xml"
+    ALLOWED_MIME_TYPES.includes(file.mimetype)
       ? cb(null, true)
-      : cb(new Error("Only image files are allowed"), false),
-  limits: { fileSize: 5 * 1024 * 1024 },
+      : cb(new Error("Unsupported image format. Allowed: JPEG, PNG, WebP, GIF, SVG, BMP, TIFF"), false),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
 });

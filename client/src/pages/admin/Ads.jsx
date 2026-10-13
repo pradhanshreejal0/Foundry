@@ -37,10 +37,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Plus, Upload, Loader2 } from "lucide-react";
+import { Pencil, Trash2, Plus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
-import { uploadImage } from "@/lib/upload";
+import ImageUploader from "@/components/admin/ImageUploader";
 
 export default function Ads() {
   const [ads, setAds] = useState([]);
@@ -48,7 +48,6 @@ export default function Ads() {
   const [error, setError] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAd, setEditingAd] = useState(null);
-  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     image: "",
@@ -112,23 +111,6 @@ export default function Ads() {
     });
     setError("");
     setDialogOpen(true);
-  };
-
-  const handleImageChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    setError("");
-
-    try {
-      const url = await uploadImage(file, accessToken);
-      setFormData((prev) => ({ ...prev, image: url }));
-    } catch (err) {
-      setError(err.message || "Image upload failed");
-    } finally {
-      setUploading(false);
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -212,42 +194,14 @@ export default function Ads() {
               {/* Image Upload */}
               <div className="space-y-2">
                 <Label>Image</Label>
-                <div className="flex items-center gap-3">
-                  <Label
-                    htmlFor="image-upload"
-                    className="flex cursor-pointer items-center gap-2 rounded-md border px-4 py-2 text-sm hover:bg-muted"
-                  >
-                    {uploading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4" />
-                        {formData.image ? "Change Image" : "Upload Image"}
-                      </>
-                    )}
-                  </Label>
-                  <Input
-                    id="image-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageChange}
-                    disabled={uploading}
-                  />
-                </div>
-
-                {formData.image && (
-                  <div className="mt-2">
-                    <img
-                      src={formData.image}
-                      alt="Preview"
-                      className="h-32 w-auto rounded-md border object-cover"
-                    />
-                  </div>
-                )}
+                <ImageUploader
+                  onUpload={(url) =>
+                    setFormData({ ...formData, image: url })
+                  }
+                  imageUrl={formData.image}
+                  label="Upload Ad Image"
+                  accessToken={accessToken}
+                />
               </div>
 
               <div className="space-y-2">
@@ -305,7 +259,7 @@ export default function Ads() {
               {error && <p className="text-sm text-destructive">{error}</p>}
 
               <DialogFooter>
-                <Button type="submit" disabled={uploading}>
+                <Button type="submit">
                   {editingAd ? "Save" : "Create"}
                 </Button>
               </DialogFooter>

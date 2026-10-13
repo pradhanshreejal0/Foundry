@@ -19,3 +19,14 @@ test("best sellers preserve sales ranking after product lookup", () => {
 
   assert.deepEqual(orderProductsBySales(products, sales), [{ _id: "p1" }, { _id: "p2" }]);
 });
+
+test("products missing from sales ranking are placed at the end", () => {
+  const products = [{ _id: "p3" }, { _id: "p1" }, { _id: "p2" }];
+  const sales = [{ _id: "p1", unitsSold: 9 }, { _id: "p2", unitsSold: 4 }];
+
+  assert.deepEqual(orderProductsBySales(products, sales), [
+    { _id: "p1" },
+    { _id: "p2" },
+    { _id: "p3" },
+  ]);
+});
