@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
@@ -78,6 +78,7 @@ export default function ProductDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [adding, setAdding] = useState(false);
+  const addLockRef = useRef(false);
 
   const [message, setMessage] = useState("");
   const [wishlistMsg, setWishlistMsg] = useState("");
@@ -270,6 +271,8 @@ export default function ProductDetails() {
       return;
     }
 
+    if (addLockRef.current || adding) return;
+    addLockRef.current = true;
     setAdding(true);
     setMessage("");
     setWishlistMsg("");
@@ -280,6 +283,7 @@ export default function ProductDetails() {
     } catch (err) {
       setMessage(err.message || "Failed to add product to cart.");
     } finally {
+      addLockRef.current = false;
       setAdding(false);
     }
   };
@@ -310,6 +314,8 @@ export default function ProductDetails() {
       return;
     }
 
+    if (addLockRef.current || adding) return;
+    addLockRef.current = true;
     setAdding(true);
     setMessage("");
     setWishlistMsg("");
@@ -320,6 +326,7 @@ export default function ProductDetails() {
     } catch (err) {
       setMessage(err.message || "Failed to proceed to checkout.");
     } finally {
+      addLockRef.current = false;
       setAdding(false);
     }
   };

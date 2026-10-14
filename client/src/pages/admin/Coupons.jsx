@@ -39,6 +39,7 @@ export default function AdminCoupons() {
 
   const create = async (e) => {
     e.preventDefault();
+    if (saving) return;
     setSaving(true);
     setError("");
     try {

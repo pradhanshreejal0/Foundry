@@ -65,6 +65,15 @@ export const initiatePayment = async (req, res) => {
     const order = await getOrderForPayment(orderId, req.user._id);
     assertPayable(order, paymentMethod);
 
+    // Already paid — never start another gateway session.
+    if (order.paymentStatus === "paid") {
+      return res.status(400).json({
+        message: "This order is already paid.",
+        orderId: order._id,
+        paymentStatus: order.paymentStatus,
+      });
+    }
+
     // Keep method in sync if user switches on pay page
     if (order.paymentMethod !== paymentMethod) {
       order.paymentMethod = paymentMethod;

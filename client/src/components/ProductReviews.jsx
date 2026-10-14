@@ -94,6 +94,7 @@ export function ProductReviews({ productId }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
     if (rating < 1) {
       setFormMessage("Please select a star rating.");
       return;

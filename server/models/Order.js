@@ -108,8 +108,27 @@ const orderSchema = new mongoose.Schema(
     // Gateway references
     paymentTransactionId: { type: String, default: "" },
     paymentProviderData: { type: mongoose.Schema.Types.Mixed, default: null },
+
+    // Client-generated key so double-clicks / retries return the same order
+    // instead of creating a second one.
+    idempotencyKey: {
+      type: String,
+      default: null,
+      trim: true,
+      maxlength: 64,
+    },
   },
   { timestamps: true }
+);
+
+// One key per user — sparse so older orders without a key are fine.
+orderSchema.index(
+  { user: 1, idempotencyKey: 1 },
+  {
+    unique: true,
+    sparse: true,
+    partialFilterExpression: { idempotencyKey: { $type: "string" } },
+  }
 );
 
 export default mongoose.model("Order", orderSchema);

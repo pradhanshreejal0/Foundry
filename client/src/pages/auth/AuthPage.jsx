@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ export default function AuthPage() {
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
+  const loginLockRef = useRef(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   // Register state
@@ -38,6 +39,7 @@ export default function AuthPage() {
   });
   const [registerError, setRegisterError] = useState("");
   const [registerLoading, setRegisterLoading] = useState(false);
+  const registerLockRef = useRef(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showRegisterConfirmPassword, setShowRegisterConfirmPassword] = useState(false);
   // When false, hide Sell/Vendor option entirely (controlled by admin settings).
@@ -90,6 +92,8 @@ export default function AuthPage() {
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
+    if (loginLockRef.current || loginLoading) return;
+    loginLockRef.current = true;
     setLoginError("");
     setLoginLoading(true);
 
@@ -107,6 +111,7 @@ export default function AuthPage() {
     } catch (err) {
       setLoginError(err.message || "Login failed");
     } finally {
+      loginLockRef.current = false;
       setLoginLoading(false);
     }
   };
@@ -118,6 +123,7 @@ export default function AuthPage() {
 
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
+    if (registerLockRef.current || registerLoading) return;
     setRegisterError("");
 
     if (registerData.password !== registerData.confirmPassword) {
@@ -137,6 +143,7 @@ export default function AuthPage() {
       return;
     }
 
+    registerLockRef.current = true;
     setRegisterLoading(true);
 
     try {
@@ -167,6 +174,7 @@ export default function AuthPage() {
     } catch (err) {
       setRegisterError(err.message || "Registration failed");
     } finally {
+      registerLockRef.current = false;
       setRegisterLoading(false);
     }
   };

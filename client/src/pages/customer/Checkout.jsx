@@ -314,6 +314,13 @@ export default function Checkout() {
   const [deliveryQuote, setDeliveryQuote] = useState(null);
   const [calculatingDelivery, setCalculatingDelivery] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const submitLockRef = useRef(false);
+  // One key per checkout page load — retries / double-clicks reuse the same order.
+  const idempotencyKeyRef = useRef(
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `chk-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+  );
   const [error, setError] = useState("");
 
   const items = useMemo(() => cart?.items || [], [cart]);
@@ -1067,6 +1074,8 @@ export default function Checkout() {
   ============================================================ */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Synchronous lock — React state alone cannot stop two clicks in the same tick.
+    if (submitLockRef.current || submitting) return;
     setError("");
 
     if (!user) return setError("Your session has expired. Please login again.");
@@ -1084,6 +1093,8 @@ export default function Checkout() {
       return setError("Please wait while the delivery fee is calculated.");
     if (!deliveryQuote)
       return setError("Please wait for the delivery fee to be calculated.");
+
+    submitLockRef.current = true;
     try {
       setSubmitting(true);
 
@@ -1103,6 +1114,7 @@ export default function Checkout() {
           },
           paymentMethod,
           couponCode: couponCode.trim() || undefined,
+          idempotencyKey: idempotencyKeyRef.current,
         },
       });
 
@@ -1199,7 +1211,13 @@ export default function Checkout() {
     } catch (err) {
       console.error(err);
       setError(err?.message || "Unable to place your order. Please try again.");
+      // Allow retry with a fresh key only after a failed request (not after success navigate).
+      idempotencyKeyRef.current =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `chk-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     } finally {
+      submitLockRef.current = false;
       setSubmitting(false);
     }
   };

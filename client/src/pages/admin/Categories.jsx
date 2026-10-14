@@ -574,6 +574,7 @@ export default function Categories() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (saving) return;
 
     const name = formData.name.trim();
 

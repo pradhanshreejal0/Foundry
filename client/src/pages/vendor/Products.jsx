@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,6 +72,9 @@ export default function Products() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const saveLockRef = useRef(false);
+  const deleteLockRef = useRef(new Set());
   const [generatingAi, setGeneratingAi] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -252,6 +255,7 @@ export default function Products() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (saveLockRef.current || saving) return;
     setError("");
 
     if (!formData.category) {
@@ -322,6 +326,8 @@ export default function Products() {
         : [],
     };
 
+    saveLockRef.current = true;
+    setSaving(true);
     try {
       if (editingProduct) {
         await api(`/products/${editingProduct._id}`, {
@@ -342,10 +348,15 @@ export default function Products() {
       setProducts(data);
     } catch (err) {
       setError(err.message || "Something went wrong");
+    } finally {
+      saveLockRef.current = false;
+      setSaving(false);
     }
   };
 
   const handleDelete = async (id) => {
+    if (deleteLockRef.current.has(id)) return;
+    deleteLockRef.current.add(id);
     try {
       await api(`/products/${id}`, {
         method: "DELETE",
@@ -354,6 +365,8 @@ export default function Products() {
       setProducts((prev) => prev.filter((p) => p._id !== id));
     } catch (err) {
       setError(err.message || "Something went wrong");
+    } finally {
+      deleteLockRef.current.delete(id);
     }
   };
 
@@ -1270,8 +1283,14 @@ export default function Products() {
               {error && <p className="text-sm text-destructive">{error}</p>}
 
               <DialogFooter>
-                <Button type="submit" disabled={uploading}>
-                  {editingProduct ? "Save" : "Create"}
+                <Button type="submit" disabled={uploading || saving}>
+                  {saving
+                    ? editingProduct
+                      ? "Saving..."
+                      : "Creating..."
+                    : editingProduct
+                      ? "Save"
+                      : "Create"}
                 </Button>
               </DialogFooter>
             </form>

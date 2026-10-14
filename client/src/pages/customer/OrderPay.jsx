@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   ArrowLeft,
@@ -27,6 +27,7 @@ export default function OrderPay() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
+  const payLockRef = useRef(false);
   const [error, setError] = useState(
     location.state?.paymentError || ""
   );
@@ -70,6 +71,12 @@ export default function OrderPay() {
 
   const startPayment = async (selectedMethod) => {
     if (!order?._id || !accessToken) return;
+    if (payLockRef.current || paying) return;
+    if (alreadyPaid) {
+      setError("This order is already paid.");
+      return;
+    }
+    payLockRef.current = true;
     setError("");
     setPaying(true);
     setMethod(selectedMethod);
@@ -144,6 +151,7 @@ export default function OrderPay() {
           "Unable to start payment. Please try again or choose Cash on Delivery on a new order."
       );
     } finally {
+      payLockRef.current = false;
       setPaying(false);
     }
   };

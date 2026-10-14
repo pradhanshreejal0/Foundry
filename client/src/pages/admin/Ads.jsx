@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,6 +48,9 @@ export default function Ads() {
   const [error, setError] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAd, setEditingAd] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const saveLockRef = useRef(false);
+  const deleteLockRef = useRef(new Set());
   const [formData, setFormData] = useState({
     title: "",
     image: "",
@@ -115,6 +118,7 @@ export default function Ads() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (saveLockRef.current || saving) return;
     setError("");
 
     if (!formData.image) {
@@ -122,6 +126,8 @@ export default function Ads() {
       return;
     }
 
+    saveLockRef.current = true;
+    setSaving(true);
     try {
       if (editingAd) {
         await api(`/ads/${editingAd._id}`, {
@@ -142,10 +148,15 @@ export default function Ads() {
       setAds(data);
     } catch (err) {
       setError(err.message || "Something went wrong");
+    } finally {
+      saveLockRef.current = false;
+      setSaving(false);
     }
   };
 
   const handleDelete = async (id) => {
+    if (deleteLockRef.current.has(id)) return;
+    deleteLockRef.current.add(id);
     try {
       await api(`/ads/${id}`, {
         method: "DELETE",
@@ -153,7 +164,9 @@ export default function Ads() {
       });
       setAds((prev) => prev.filter((ad) => ad._id !== id));
     } catch (err) {
-      setError(err.message || "Something went wrong");
+      setError(err.message || "Failed to delete ad");
+    } finally {
+      deleteLockRef.current.delete(id);
     }
   };
 
@@ -259,8 +272,8 @@ export default function Ads() {
               {error && <p className="text-sm text-destructive">{error}</p>}
 
               <DialogFooter>
-                <Button type="submit">
-                  {editingAd ? "Save" : "Create"}
+                <Button type="submit" disabled={saving}>
+                  {saving ? "Saving..." : editingAd ? "Save" : "Create"}
                 </Button>
               </DialogFooter>
             </form>

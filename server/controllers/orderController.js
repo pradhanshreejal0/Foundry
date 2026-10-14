@@ -497,7 +497,26 @@ export const createOrder = async (req, res) => {
       shippingAddress,
       paymentMethod = "cod",
       couponCode = "",
+      idempotencyKey: rawIdempotencyKey,
     } = req.body;
+
+    // Prefer body key; also accept Idempotency-Key header (common API pattern).
+    const idempotencyKey = String(
+      rawIdempotencyKey || req.headers["idempotency-key"] || ""
+    )
+      .trim()
+      .slice(0, 64);
+
+    // Same client key → same order (blocks double-click / retry duplicates).
+    if (idempotencyKey) {
+      const existing = await Order.findOne({
+        user: req.user._id,
+        idempotencyKey,
+      });
+      if (existing) {
+        return res.status(200).json(existing);
+      }
+    }
 
     const allowedPaymentMethods = ["cod", "esewa", "khalti"];
 
@@ -641,7 +660,7 @@ export const createOrder = async (req, res) => {
     try {
       const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-      order = await Order.create({
+      const orderPayload = {
         user: req.user._id,
         orderNumber,
         items: orderItems,
@@ -669,7 +688,48 @@ export const createOrder = async (req, res) => {
         paymentStatus: paymentMethod === "cod" ? "pending" : "pending",
         status: "pending",
         stockReserved: true,
-      });
+      };
+      if (idempotencyKey) {
+        orderPayload.idempotencyKey = idempotencyKey;
+      }
+
+      try {
+        order = await Order.create(orderPayload);
+      } catch (dupErr) {
+        // Concurrent double-submit hit the unique (user, idempotencyKey) index.
+        if (dupErr?.code === 11000 && idempotencyKey) {
+          const existing = await Order.findOne({
+            user: req.user._id,
+            idempotencyKey,
+          });
+          if (existing) {
+            // Stock was reserved for this request but the order already exists —
+            // release this request's reservation; the winner owns the order.
+            for (const r of reservedLines.reverse()) {
+              try {
+                if (r.variantKey) {
+                  await Product.findOneAndUpdate(
+                    { _id: r.productId, "variants.key": r.variantKey },
+                    {
+                      $inc: {
+                        stock: r.quantity,
+                        "variants.$[v].stock": r.quantity,
+                      },
+                    },
+                    { arrayFilters: [{ "v.key": r.variantKey }] }
+                  );
+                } else {
+                  await Product.findByIdAndUpdate(r.productId, {
+                    $inc: { stock: r.quantity },
+                  });
+                }
+              } catch (_) {}
+            }
+            return res.status(200).json(existing);
+          }
+        }
+        throw dupErr;
+      }
 
       cart.items = [];
       await cart.save();
