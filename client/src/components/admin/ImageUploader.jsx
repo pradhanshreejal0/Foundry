@@ -100,7 +100,9 @@ export default function ImageUploader({
           {uploading ? (
             <>
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
-              <span className="text-sm text-muted-foreground">Uploading...</span>
+              <span className="text-sm text-muted-foreground">
+                Uploading...
+              </span>
             </>
           ) : (
             <>
@@ -121,7 +123,7 @@ export default function ImageUploader({
       {/* Error Message */}
       {error && (
         <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-destructive">
-          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <AlertCircle className="w-4 h-4 shrink-0" />
           <p className="text-sm">{error}</p>
         </div>
       )}
