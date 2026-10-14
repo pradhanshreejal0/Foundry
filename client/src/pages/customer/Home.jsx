@@ -217,7 +217,7 @@ export default function Home() {
 
   const categoryTiles =
     categories.length >= 4
-      ? categories.slice(0, 4).map((c) => ({
+      ? categories.slice(0, 4).map((c, i) => ({
           name: c.name,
           line: c.description || "Explore our collection",
           image: c.image || c.banner || "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=900",

@@ -52,38 +52,27 @@
     }
 }
 
-/* Observer state - initially hidden.
-   Declared BEFORE the animation classes so their final-state declarations
-   win the cascade (equal specificity, later source order). */
-[data-scroll-animate] {
-    opacity: 0;
-    transform: translateY(30px);
-}
-
-/* Scroll animation utility classes. The opacity/transform declarations are
-   the post-animation resting state; the keyframes play on top of them. */
+/* Scroll animation utility classes */
 .scroll-fade-in-up {
-    opacity: 1;
-    transform: none;
     animation: fadeInUp 0.8s ease-out;
 }
 
 .scroll-fade-in-down {
-    opacity: 1;
-    transform: none;
     animation: fadeInDown 0.8s ease-out;
 }
 
 .scroll-fade-in-left {
-    opacity: 1;
-    transform: none;
     animation: fadeInLeft 0.8s ease-out;
 }
 
 .scroll-fade-in-right {
-    opacity: 1;
-    transform: none;
     animation: fadeInRight 0.8s ease-out;
+}
+
+/* Observer state - initially hidden */
+[data-scroll-animate] {
+    opacity: 0;
+    transform: translateY(30px);
 }
 
 /* =========================================================
@@ -437,4 +426,15 @@ body {
     animation: shimmer 2.8s ease-in-out infinite;
 }
 
+/* Stagger-friendly delay utilities for scroll reveals */
+[data-scroll-animate] {
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.scroll-fade-in-up,
+.scroll-fade-in-down,
+.scroll-fade-in-left,
+.scroll-fade-in-right {
+    opacity: 1 !important;
+    transform: none !important;
+}
 

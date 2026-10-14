@@ -8,9 +8,9 @@ import { StarRating } from "@/components/StarRating";
 import { ProductReviews } from "@/components/ProductReviews";
 import { PriceTag } from "@/components/PriceTag";
 import { ProductCarousel } from "@/components/ProductCarousel";
-import { cn } from "@/lib/utils";
+import { cn, getFinalPrice } from "@/lib/utils";
 import { cloudinaryImage } from "@/lib/cloudinary";
-import { Heart, MessageCircle, Plus, Minus, Zap } from "lucide-react";
+import { Heart, MessageCircle, Sparkles, Package, Plus, Minus, Zap } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,53 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+
+function ProductCard({ product }) {
+  const image =
+    product?.images?.[0] &&
+    (typeof product.images[0] === "string"
+      ? product.images[0]
+      : product.images[0]?.url);
+
+  const price = getFinalPrice(product);
+
+  return (
+    <Link
+      to={`/products/${product._id}`}
+      className="group flex flex-col overflow-hidden rounded-xl border bg-background transition hover:border-primary/40 hover:shadow-md"
+    >
+      <div className="aspect-square overflow-hidden bg-muted">
+        {image ? (
+          <img
+            src={cloudinaryImage(image, { width: 400 })}
+            srcSet={`${cloudinaryImage(image, { width: 300 })} 300w, ${cloudinaryImage(image, { width: 400 })} 400w, ${cloudinaryImage(image, { width: 600 })} 600w`}
+            sizes="(max-width: 640px) 50vw, 300px"
+            alt={product.title}
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+            loading="lazy"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+            <Package className="h-8 w-8" />
+          </div>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col gap-1 p-3">
+        <p className="line-clamp-2 text-sm font-medium leading-snug group-hover:text-primary">
+          {product.title}
+        </p>
+        <div className="mt-auto flex items-center gap-2">
+          <span className="text-sm font-bold">RS {Number(price).toFixed(0)}</span>
+          {product.discountPercentage > 0 && (
+            <span className="text-xs text-muted-foreground line-through">
+              RS {Number(product.price).toFixed(0)}
+            </span>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 export default function ProductDetails() {
   const { id } = useParams();
