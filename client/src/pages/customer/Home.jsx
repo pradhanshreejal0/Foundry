@@ -47,7 +47,7 @@ function ProductCard({ product }) {
         {img ? (
           <img
             src={img}
-            alt={product.name}
+            alt={product.title || "Product"}
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
           />
@@ -68,7 +68,7 @@ function ProductCard({ product }) {
           to={`/products/${product._id || product.slug}`}
           className="line-clamp-2 min-h-[2.4rem] text-[13px] font-semibold leading-snug text-foreground hover:text-primary"
         >
-          {product.name}
+          {product.title}
         </Link>
         <div className="mt-auto flex items-center justify-between pt-2">
           <span className="font-heading text-[15px] font-bold text-foreground">

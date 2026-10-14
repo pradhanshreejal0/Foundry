@@ -12,3 +12,4 @@ const limiter = (max, message) =>
 
 export const loginLimiter = limiter(10, "Too many login attempts. Please try again later."); // 10 per IP
 export const forgotPasswordLimiter = limiter(5, "Too many requests. Please try again later."); // 5 per IP
+export const registerLimiter = limiter(8, "Too many registration attempts. Please try again later."); // 8 per IP

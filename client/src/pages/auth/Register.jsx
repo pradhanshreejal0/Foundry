@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,8 +22,30 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [vendorRegistrationEnabled, setVendorRegistrationEnabled] = useState(true);
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    let cancelled = false;
+    api("/settings/public")
+      .then((s) => {
+        if (cancelled) return;
+        const enabled = s?.vendorRegistrationEnabled !== false;
+        setVendorRegistrationEnabled(enabled);
+        if (!enabled) {
+          setFormData((prev) =>
+            prev.role === "vendor" ? { ...prev, role: "customer", storeName: "" } : prev
+          );
+        }
+      })
+      .catch(() => {
+        /* keep default: allow vendor option if settings fail to load */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -90,38 +112,40 @@ export default function Register() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Role pills */}
-            <div className="space-y-2">
-              <Label>I want to</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, role: "customer" })}
-                  className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 text-sm transition ${
-                    !isVendor
-                      ? "border-primary bg-primary/10 text-foreground shadow-sm"
-                      : "border-border text-muted-foreground hover:bg-muted/50"
-                  }`}
-                >
-                  <User className="h-5 w-5" />
-                  <span className="font-medium">Buy products</span>
-                  <span className="text-xs opacity-80">Customer</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, role: "vendor" })}
-                  className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 text-sm transition ${
-                    isVendor
-                      ? "border-primary bg-primary/10 text-foreground shadow-sm"
-                      : "border-border text-muted-foreground hover:bg-muted/50"
-                  }`}
-                >
-                  <Store className="h-5 w-5" />
-                  <span className="font-medium">Sell products</span>
-                  <span className="text-xs opacity-80">Vendor</span>
-                </button>
+            {/* Role pills — vendor option only when admin enables registration */}
+            {vendorRegistrationEnabled && (
+              <div className="space-y-2">
+                <Label>I want to</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, role: "customer" })}
+                    className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 text-sm transition ${
+                      !isVendor
+                        ? "border-primary bg-primary/10 text-foreground shadow-sm"
+                        : "border-border text-muted-foreground hover:bg-muted/50"
+                    }`}
+                  >
+                    <User className="h-5 w-5" />
+                    <span className="font-medium">Buy products</span>
+                    <span className="text-xs opacity-80">Customer</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, role: "vendor" })}
+                    className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 text-sm transition ${
+                      isVendor
+                        ? "border-primary bg-primary/10 text-foreground shadow-sm"
+                        : "border-border text-muted-foreground hover:bg-muted/50"
+                    }`}
+                  >
+                    <Store className="h-5 w-5" />
+                    <span className="font-medium">Sell products</span>
+                    <span className="text-xs opacity-80">Vendor</span>
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>

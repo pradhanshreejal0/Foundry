@@ -52,6 +52,7 @@ export default function Settings() {
     platformName: "Foundry",
     supportEmail: "",
     lowStockThreshold: 5,
+    vendorRegistrationEnabled: true,
     hero: { ...DEFAULT_HERO },
     promo: { ...DEFAULT_PROMO },
   });
@@ -69,6 +70,7 @@ export default function Settings() {
           platformName: data.platformName ?? "Foundry",
           supportEmail: data.supportEmail ?? "",
           lowStockThreshold: data.lowStockThreshold ?? 5,
+          vendorRegistrationEnabled: data.vendorRegistrationEnabled !== false,
           hero: { ...DEFAULT_HERO, ...(data.hero || {}) },
           promo: { ...DEFAULT_PROMO, ...(data.promo || {}) },
         });
@@ -136,6 +138,7 @@ export default function Settings() {
           platformName: form.platformName,
           supportEmail: form.supportEmail,
           lowStockThreshold: Number(form.lowStockThreshold),
+          vendorRegistrationEnabled: !!form.vendorRegistrationEnabled,
           hero: form.hero,
           promo: form.promo,
         },
@@ -146,6 +149,7 @@ export default function Settings() {
         platformName: updated.platformName,
         supportEmail: updated.supportEmail,
         lowStockThreshold: updated.lowStockThreshold,
+        vendorRegistrationEnabled: updated.vendorRegistrationEnabled !== false,
         hero: { ...DEFAULT_HERO, ...(updated.hero || {}) },
         promo: { ...DEFAULT_PROMO, ...(updated.promo || {}) },
       });
@@ -222,6 +226,28 @@ export default function Settings() {
                 onChange={handleChange("lowStockThreshold")}
                 required
               />
+            </div>
+            <div className="space-y-2 rounded-lg border border-border p-4">
+              <label className="flex items-start gap-3 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!form.vendorRegistrationEnabled}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      vendorRegistrationEnabled: e.target.checked,
+                    }))
+                  }
+                  className="mt-0.5 size-4 accent-primary"
+                />
+                <span>
+                  <span className="font-medium block">Allow vendor registration</span>
+                  <span className="text-muted-foreground text-xs">
+                    When disabled, new users cannot create a vendor/seller account
+                    from the public registration page. Existing vendors are unaffected.
+                  </span>
+                </span>
+              </label>
             </div>
           </CardContent>
         </Card>

@@ -8,7 +8,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import zlib from "node:zlib";
 
-import { loginLimiter, forgotPasswordLimiter } from "./middleware/rateLimiters.js";
+import { loginLimiter, forgotPasswordLimiter, registerLimiter } from "./middleware/rateLimiters.js";
 import { connectDB } from "./config/db.js";
 
 import authRoutes from "./routes/authRoutes.js";
@@ -132,6 +132,7 @@ app.use(cookieParser());
 
 // Brute-force protection on the sensitive auth endpoints.
 app.use("/api/auth/login", loginLimiter);
+app.use("/api/auth/register", registerLimiter);
 app.use("/api/auth/forgot-password", forgotPasswordLimiter);
 
 // ---------- Routes ----------

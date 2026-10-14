@@ -25,6 +25,12 @@ const settingsSchema = new mongoose.Schema(
       min: 0,
     },
 
+    // When false, public registration cannot create vendor accounts.
+    vendorRegistrationEnabled: {
+      type: Boolean,
+      default: true,
+    },
+
     // ——— Storefront (admin-only editable) ———
     hero: {
       visible: { type: Boolean, default: true },

@@ -4,6 +4,7 @@ function pickStorefront(settings) {
   return {
     platformName: settings.platformName,
     supportEmail: settings.supportEmail,
+    vendorRegistrationEnabled: settings.vendorRegistrationEnabled !== false,
     hero: settings.hero || {},
     promo: settings.promo || {},
   };
@@ -39,6 +40,7 @@ export const updateSettings = async (req, res) => {
       platformName,
       supportEmail,
       lowStockThreshold,
+      vendorRegistrationEnabled,
       hero,
       promo,
     } = req.body;
@@ -73,6 +75,10 @@ export const updateSettings = async (req, res) => {
         });
       }
       settings.lowStockThreshold = value;
+    }
+
+    if (vendorRegistrationEnabled !== undefined) {
+      settings.vendorRegistrationEnabled = Boolean(vendorRegistrationEnabled);
     }
 
     // Admin-only storefront content (hero + promo band)

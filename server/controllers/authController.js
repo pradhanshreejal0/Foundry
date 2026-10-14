@@ -70,8 +70,17 @@ export const register = async (req, res) => {
 
     // Only "vendor" can be self-selected; admin can never be requested here.
     const isVendor = role === "vendor";
-    if (isVendor && !String(storeName || "").trim()) {
-      return res.status(400).json({ message: "Store name is required for vendor registration" });
+    if (isVendor) {
+      const Settings = (await import("../models/Settings.js")).default;
+      const settings = await Settings.getSingleton();
+      if (settings.vendorRegistrationEnabled === false) {
+        return res.status(403).json({
+          message: "Vendor registration is currently disabled by the administrator",
+        });
+      }
+      if (!String(storeName || "").trim()) {
+        return res.status(400).json({ message: "Store name is required for vendor registration" });
+      }
     }
 
     const normalizedEmail = email.trim().toLowerCase();
