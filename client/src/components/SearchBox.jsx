@@ -20,26 +20,26 @@ export default function SearchBox({ variant = "desktop", onNavigate }) {
   const [categories, setCategories] = useState(categoriesCache || []);
 
   useEffect(() => {
-    let cancelled = false;
-
-    // Use cached categories if available and not expired
+    // Initial state already uses categoriesCache — only fetch when missing/expired
     const now = Date.now();
     if (categoriesCache && now - cacheTime < CACHE_DURATION) {
-      setCategories(categoriesCache);
-    } else {
-      (async () => {
-        try {
-          const data = await api("/categories");
-          if (!cancelled && Array.isArray(data)) {
-            categoriesCache = data;
-            cacheTime = now;
-            setCategories(data);
-          }
-        } catch {
-          /* categories optional for search empty state */
-        }
-      })();
+      return;
     }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await api("/categories");
+        if (!cancelled && Array.isArray(data)) {
+          categoriesCache = data;
+          cacheTime = Date.now();
+          setCategories(data);
+        }
+      } catch {
+        /* categories optional for search empty state */
+      }
+    })();
+
     return () => {
       cancelled = true;
     };
