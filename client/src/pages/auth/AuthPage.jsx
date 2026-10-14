@@ -40,9 +40,39 @@ export default function AuthPage() {
   const [registerLoading, setRegisterLoading] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showRegisterConfirmPassword, setShowRegisterConfirmPassword] = useState(false);
+  // When false, hide Sell/Vendor option entirely (controlled by admin settings).
+  const [vendorRegistrationEnabled, setVendorRegistrationEnabled] = useState(true);
 
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  // Load public settings so the Sell/Vendor option only shows when admin enables it.
+  useEffect(() => {
+    let cancelled = false;
+    const loadVendorFlag = () => {
+      api("/settings/public")
+        .then((s) => {
+          if (cancelled) return;
+          const enabled = s?.vendorRegistrationEnabled !== false;
+          setVendorRegistrationEnabled(enabled);
+          if (!enabled) {
+            setRegisterData((prev) =>
+              prev.role === "vendor" ? { ...prev, role: "customer", storeName: "" } : prev
+            );
+          }
+        })
+        .catch(() => {
+          /* if settings fail, keep option visible; server still enforces on register */
+        });
+    };
+    loadVendorFlag();
+    const onFocus = () => loadVendorFlag();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
 
   const handleFlip = (newMode) => {
     if (isFlipping) return;
@@ -95,6 +125,13 @@ export default function AuthPage() {
       return;
     }
 
+    if (registerData.role === "vendor" && !vendorRegistrationEnabled) {
+      setRegisterError("Vendor registration is currently disabled by the administrator");
+      setRegisterData((prev) => ({ ...prev, role: "customer", storeName: "" }));
+      setVendorRegistrationEnabled(false);
+      return;
+    }
+
     if (registerData.role === "vendor" && !registerData.storeName.trim()) {
       setRegisterError("Store name is required for vendor registration");
       return;
@@ -117,7 +154,7 @@ export default function AuthPage() {
 
       const data = await api("/auth/register", {
         method: "POST",
-        body: JSON.stringify(payload),
+        body: payload,
       });
 
       login(data.user, data.accessToken);
@@ -278,47 +315,55 @@ export default function AuthPage() {
                     <CardTitle className="text-2xl tracking-tight">Create account</CardTitle>
                   </div>
                   <CardDescription>
-                    Shop as a customer or open a store to sell.
+                    {vendorRegistrationEnabled
+                      ? "Shop as a customer or open a store to sell."
+                      : "Create a customer account to shop on the marketplace."}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleRegisterSubmit} className="space-y-4">
-                    {/* Role pills */}
-                    <div className="space-y-2">
-                      <Label>I want to</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setRegisterData({ ...registerData, role: "customer" })
-                          }
-                          className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 text-sm transition ${
-                            !isVendor
-                              ? "border-primary bg-primary/10 text-foreground shadow-sm"
-                              : "border-border text-muted-foreground hover:bg-muted/50"
-                          }`}
-                        >
-                          <User className="h-5 w-5" />
-                          <span className="font-medium">Buy</span>
-                          <span className="text-xs opacity-80">Customer</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setRegisterData({ ...registerData, role: "vendor" })
-                          }
-                          className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 text-sm transition ${
-                            isVendor
-                              ? "border-primary bg-primary/10 text-foreground shadow-sm"
-                              : "border-border text-muted-foreground hover:bg-muted/50"
-                          }`}
-                        >
-                          <Store className="h-5 w-5" />
-                          <span className="font-medium">Sell</span>
-                          <span className="text-xs opacity-80">Vendor</span>
-                        </button>
+                    {/* Role pills — Sell/Vendor only when admin enables vendor registration */}
+                    {vendorRegistrationEnabled ? (
+                      <div className="space-y-2">
+                        <Label>I want to</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setRegisterData({
+                                ...registerData,
+                                role: "customer",
+                                storeName: "",
+                              })
+                            }
+                            className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 text-sm transition ${
+                              !isVendor
+                                ? "border-primary bg-primary/10 text-foreground shadow-sm"
+                                : "border-border text-muted-foreground hover:bg-muted/50"
+                            }`}
+                          >
+                            <User className="h-5 w-5" />
+                            <span className="font-medium">Buy</span>
+                            <span className="text-xs opacity-80">Customer</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setRegisterData({ ...registerData, role: "vendor" })
+                            }
+                            className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 text-sm transition ${
+                              isVendor
+                                ? "border-primary bg-primary/10 text-foreground shadow-sm"
+                                : "border-border text-muted-foreground hover:bg-muted/50"
+                            }`}
+                          >
+                            <Store className="h-5 w-5" />
+                            <span className="font-medium">Sell</span>
+                            <span className="text-xs opacity-80">Vendor</span>
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    ) : null}
 
                     <div className="space-y-2">
                       <Label htmlFor="name">Full Name</Label>
