@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { StarRating } from "@/components/StarRating";
 import { ProductReviews } from "@/components/ProductReviews";
 import { PriceTag } from "@/components/PriceTag";
-import { cn, getFinalPrice } from "@/lib/utils";
+import { ProductCarousel } from "@/components/ProductCarousel";
+import { cn } from "@/lib/utils";
 import { cloudinaryImage } from "@/lib/cloudinary";
-import { Heart, MessageCircle, Sparkles, Package, Plus, Minus, Zap } from "lucide-react";
+import { Heart, MessageCircle, Plus, Minus, Zap } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -19,53 +20,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-
-function ProductCard({ product }) {
-  const image =
-    product?.images?.[0] &&
-    (typeof product.images[0] === "string"
-      ? product.images[0]
-      : product.images[0]?.url);
-
-  const price = getFinalPrice(product);
-
-  return (
-    <Link
-      to={`/products/${product._id}`}
-      className="group flex flex-col overflow-hidden rounded-xl border bg-background transition hover:border-primary/40 hover:shadow-md"
-    >
-      <div className="aspect-square overflow-hidden bg-muted">
-        {image ? (
-          <img
-            src={cloudinaryImage(image, { width: 400 })}
-            srcSet={`${cloudinaryImage(image, { width: 300 })} 300w, ${cloudinaryImage(image, { width: 400 })} 400w, ${cloudinaryImage(image, { width: 600 })} 600w`}
-            sizes="(max-width: 640px) 50vw, 300px"
-            alt={product.title}
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-            loading="lazy"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-            <Package className="h-8 w-8" />
-          </div>
-        )}
-      </div>
-      <div className="flex flex-1 flex-col gap-1 p-3">
-        <p className="line-clamp-2 text-sm font-medium leading-snug group-hover:text-primary">
-          {product.title}
-        </p>
-        <div className="mt-auto flex items-center gap-2">
-          <span className="text-sm font-bold">RS {Number(price).toFixed(0)}</span>
-          {product.discountPercentage > 0 && (
-            <span className="text-xs text-muted-foreground line-through">
-              RS {Number(product.price).toFixed(0)}
-            </span>
-          )}
-        </div>
-      </div>
-    </Link>
-  );
-}
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -147,7 +101,8 @@ export default function ProductDetails() {
     };
   }, [id]);
 
-  // Related (same category) + Recommended (popular / other) products
+  // Related = same subcategory/category (product.category is the leaf / subcategory)
+  // Recommended = other popular products
   useEffect(() => {
     if (!product?._id) return;
 
@@ -155,6 +110,7 @@ export default function ProductDetails() {
 
     const loadSuggestions = async () => {
       try {
+        // product.category is the assigned category — usually a subcategory
         const categoryId =
           typeof product.category === "string"
             ? product.category
@@ -162,9 +118,13 @@ export default function ProductDetails() {
 
         const [relatedRes, recommendedRes] = await Promise.all([
           categoryId
-            ? api(`/products?category=${categoryId}&limit=8&compact=true&includeTotal=false`).catch(() => null)
+            ? api(
+                `/products?category=${categoryId}&limit=16&compact=true&includeTotal=false`
+              ).catch(() => null)
             : Promise.resolve(null),
-          api(`/products?limit=8&compact=true&includeTotal=false`).catch(() => null),
+          api(`/products?limit=12&compact=true&includeTotal=false`).catch(
+            () => null
+          ),
         ]);
 
         if (cancelled) return;
@@ -172,9 +132,9 @@ export default function ProductDetails() {
         const normalize = (data) =>
           Array.isArray(data) ? data : data?.products || [];
 
-        const related = normalize(relatedRes)
-          .filter((p) => String(p._id) !== String(product._id))
-          .slice(0, 4);
+        const related = normalize(relatedRes).filter(
+          (p) => String(p._id) !== String(product._id)
+        );
 
         const relatedIds = new Set(related.map((p) => String(p._id)));
 
@@ -184,7 +144,7 @@ export default function ProductDetails() {
               String(p._id) !== String(product._id) &&
               !relatedIds.has(String(p._id))
           )
-          .slice(0, 4);
+          .slice(0, 8);
 
         setRelatedProducts(related);
         setRecommendedProducts(recommended);
@@ -1170,38 +1130,40 @@ export default function ProductDetails() {
 
       <ProductReviews productId={product._id} />
 
-      {/* Related products (same category) */}
+      {/* Related products — same subcategory / category, horizontal scroll when many */}
       {relatedProducts.length > 0 && (
-        <section className="mt-12">
-          <div className="mb-4 flex items-center gap-2">
-            <Package className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold tracking-tight">
-              Related products
-            </h2>
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-            {relatedProducts.map((p) => (
-              <ProductCard key={p._id} product={p} />
-            ))}
-          </div>
-        </section>
+        <div className="mt-12" data-scroll-animate="fade-in-up">
+          <ProductCarousel
+            products={relatedProducts}
+            title={
+              product.category?.name
+                ? `More in ${product.category.name}`
+                : "Related products"
+            }
+            note="Same subcategory"
+            link={
+              product.category?._id
+                ? `/products?category=${product.category._id}`
+                : "/products"
+            }
+            linkLabel="View all in category"
+            cardWidth={200}
+          />
+        </div>
       )}
 
       {/* Recommended products */}
       {recommendedProducts.length > 0 && (
-        <section className="mt-10 mb-4">
-          <div className="mb-4 flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold tracking-tight">
-              Recommended for you
-            </h2>
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-            {recommendedProducts.map((p) => (
-              <ProductCard key={p._id} product={p} />
-            ))}
-          </div>
-        </section>
+        <div className="mt-10 mb-6" data-scroll-animate="fade-in-up">
+          <ProductCarousel
+            products={recommendedProducts}
+            title="Recommended for you"
+            note="You might also like"
+            link="/products"
+            linkLabel="Explore all"
+            cardWidth={200}
+          />
+        </div>
       )}
 
       {/* Chat with us dialog */}

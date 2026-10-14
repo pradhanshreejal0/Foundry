@@ -52,27 +52,38 @@
     }
 }
 
-/* Scroll animation utility classes */
+/* Observer state - initially hidden.
+   Declared BEFORE the animation classes so their final-state declarations
+   win the cascade (equal specificity, later source order). */
+[data-scroll-animate] {
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+/* Scroll animation utility classes. The opacity/transform declarations are
+   the post-animation resting state; the keyframes play on top of them. */
 .scroll-fade-in-up {
+    opacity: 1;
+    transform: none;
     animation: fadeInUp 0.8s ease-out;
 }
 
 .scroll-fade-in-down {
+    opacity: 1;
+    transform: none;
     animation: fadeInDown 0.8s ease-out;
 }
 
 .scroll-fade-in-left {
+    opacity: 1;
+    transform: none;
     animation: fadeInLeft 0.8s ease-out;
 }
 
 .scroll-fade-in-right {
+    opacity: 1;
+    transform: none;
     animation: fadeInRight 0.8s ease-out;
-}
-
-/* Observer state - initially hidden */
-[data-scroll-animate] {
-    opacity: 0;
-    transform: translateY(30px);
 }
 
 /* =========================================================
@@ -380,3 +391,50 @@ body {
 .dark ::-webkit-scrollbar-thumb:hover {
     background: #4ade80;
 }
+
+/* =========================================================
+   PRODUCT CAROUSEL (horizontal scroll for many products)
+   ========================================================= */
+.product-carousel-track {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--primary) 35%, transparent) transparent;
+}
+.product-carousel-track::-webkit-scrollbar {
+    height: 6px;
+}
+.product-carousel-track::-webkit-scrollbar-track {
+    background: transparent;
+}
+.product-carousel-track::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--primary) 40%, transparent);
+    border-radius: 999px;
+}
+.product-carousel-track::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+/* Premium soft float / pulse for badges & CTAs */
+@keyframes softFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+.animate-soft-float {
+    animation: softFloat 3.2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        color-mix(in srgb, var(--primary) 12%, transparent) 50%,
+        transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2.8s ease-in-out infinite;
+}
+
+

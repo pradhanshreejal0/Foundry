@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import { cloudinaryImage } from "@/lib/cloudinary";
 import { getFinalPrice } from "@/lib/utils";
 import { AdBanner } from "@/components/AdBanner";
+import { ProductCarousel } from "@/components/ProductCarousel";
 
 const DEFAULT_HERO = {
   visible: true,
@@ -86,34 +87,60 @@ function ProductCard({ product }) {
 }
 
 function ProductShelf({ title, note, items, loading, link = "/products" }) {
+  const useCarousel = !loading && items.length > 4;
+
   return (
-    <section className="mx-auto max-w-310 px-6 pb-12 pt-20 sm:px-8">
-      <div className="mb-10 flex items-end justify-between gap-4">
-        <div>
-          <p className="mb-1.5 text-[11px] text-muted-foreground">{note}</p>
-          <h2 className="font-heading text-[28px] font-bold tracking-tight text-foreground sm:text-[32px]">
-            {title}
-          </h2>
-        </div>
-        <Link
-          to={link}
-          className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-primary transition-colors hover:opacity-80"
-        >
-          View everything <ArrowRight size={17} />
-        </Link>
-      </div>
+    <section
+      className="mx-auto max-w-310 px-6 pb-12 pt-20 sm:px-8"
+      data-scroll-animate="fade-in-up"
+    >
       {loading ? (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {[0, 1, 2, 3].map((n) => (
-            <div key={n} className="skeleton h-82 rounded-lg" />
-          ))}
-        </div>
+        <>
+          <div className="mb-10 flex items-end justify-between gap-4">
+            <div>
+              <p className="mb-1.5 text-[11px] text-muted-foreground">{note}</p>
+              <h2 className="font-heading text-[28px] font-bold tracking-tight text-foreground sm:text-[32px]">
+                {title}
+              </h2>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            {[0, 1, 2, 3].map((n) => (
+              <div key={n} className="skeleton h-82 rounded-lg" />
+            ))}
+          </div>
+        </>
+      ) : useCarousel ? (
+        <ProductCarousel
+          products={items}
+          title={title}
+          note={note}
+          link={link}
+          linkLabel="View everything"
+          cardWidth={240}
+        />
       ) : items.length ? (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {items.slice(0, 4).map((item, index) => (
-            <ProductCard key={item._id || item.slug || index} product={item} />
-          ))}
-        </div>
+        <>
+          <div className="mb-10 flex items-end justify-between gap-4">
+            <div>
+              <p className="mb-1.5 text-[11px] text-muted-foreground">{note}</p>
+              <h2 className="font-heading text-[28px] font-bold tracking-tight text-foreground sm:text-[32px]">
+                {title}
+              </h2>
+            </div>
+            <Link
+              to={link}
+              className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-primary transition-colors hover:opacity-80"
+            >
+              View everything <ArrowRight size={17} />
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            {items.slice(0, 4).map((item, index) => (
+              <ProductCard key={item._id || item.slug || index} product={item} />
+            ))}
+          </div>
+        </>
       ) : (
         <div className="rounded-lg border border-dashed border-border px-8 py-8 text-[13px] text-muted-foreground">
           Nothing here just yet.{" "}
@@ -190,7 +217,7 @@ export default function Home() {
 
   const categoryTiles =
     categories.length >= 4
-      ? categories.slice(0, 4).map((c, i) => ({
+      ? categories.slice(0, 4).map((c) => ({
           name: c.name,
           line: c.description || "Explore our collection",
           image: c.image || c.banner || "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=900",
@@ -257,7 +284,7 @@ export default function Home() {
       )}
 
       {/* —— Category grid —— */}
-      <section className="mx-auto max-w-310 px-6 pb-12 pt-20 sm:px-8">
+      <section className="mx-auto max-w-310 px-6 pb-12 pt-20 sm:px-8" data-scroll-animate="fade-in-up">
         <div className="mb-10 flex items-end justify-between gap-4">
           <div>
             <p className="mb-1.5 text-[11px] text-muted-foreground">A good place to begin</p>
