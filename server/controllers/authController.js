@@ -11,6 +11,7 @@ import Vendor from "../models/Vendor.js";
 import Product from "../models/Product.js";
 import Cart from "../models/Cart.js";
 import Wishlist from "../models/Wishlist.js";
+import Settings from "../models/Settings.js";
 import { notifyEmail } from "../utils/notify.js";
 import { generateAccessToken, generateRefreshToken } from "../utils/generateTokens.js";
 
@@ -71,8 +72,8 @@ export const register = async (req, res) => {
     // Only "vendor" can be self-selected; admin can never be requested here.
     const isVendor = role === "vendor";
     if (isVendor) {
-      const Settings = (await import("../models/Settings.js")).default;
       const settings = await Settings.getSingleton();
+      // Treat only explicit false as disabled (missing field => enabled for backwards compat).
       if (settings.vendorRegistrationEnabled === false) {
         return res.status(403).json({
           message: "Vendor registration is currently disabled by the administrator",

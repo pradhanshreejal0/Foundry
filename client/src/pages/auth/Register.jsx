@@ -28,22 +28,30 @@ export default function Register() {
 
   useEffect(() => {
     let cancelled = false;
-    api("/settings/public")
-      .then((s) => {
-        if (cancelled) return;
-        const enabled = s?.vendorRegistrationEnabled !== false;
-        setVendorRegistrationEnabled(enabled);
-        if (!enabled) {
-          setFormData((prev) =>
-            prev.role === "vendor" ? { ...prev, role: "customer", storeName: "" } : prev
-          );
-        }
-      })
-      .catch(() => {
-        /* keep default: allow vendor option if settings fail to load */
-      });
+    const load = () => {
+      api("/settings/public")
+        .then((s) => {
+          if (cancelled) return;
+          // Backend always sends an explicit boolean after the settings update.
+          const enabled = s?.vendorRegistrationEnabled !== false;
+          setVendorRegistrationEnabled(enabled);
+          if (!enabled) {
+            setFormData((prev) =>
+              prev.role === "vendor" ? { ...prev, role: "customer", storeName: "" } : prev
+            );
+          }
+        })
+        .catch(() => {
+          /* keep default if settings fail to load */
+        });
+    };
+    load();
+    // Re-check when the user returns to this tab (admin may have toggled).
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
     return () => {
       cancelled = true;
+      window.removeEventListener("focus", onFocus);
     };
   }, []);
 
@@ -57,6 +65,13 @@ export default function Register() {
 
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
+      return;
+    }
+
+    if (formData.role === "vendor" && !vendorRegistrationEnabled) {
+      setError("Vendor registration is currently disabled by the administrator");
+      setFormData((prev) => ({ ...prev, role: "customer", storeName: "" }));
+      setVendorRegistrationEnabled(false);
       return;
     }
 
@@ -82,7 +97,7 @@ export default function Register() {
 
       const data = await api("/auth/register", {
         method: "POST",
-        body: JSON.stringify(payload),
+        body: payload,
       });
 
       login(data.user, data.accessToken);

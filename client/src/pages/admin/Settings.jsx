@@ -144,16 +144,21 @@ export default function Settings() {
         },
       });
 
+      const vendorEnabled = updated.vendorRegistrationEnabled !== false;
       setForm({
         commissionPercentage: updated.commissionPercentage,
         platformName: updated.platformName,
         supportEmail: updated.supportEmail,
         lowStockThreshold: updated.lowStockThreshold,
-        vendorRegistrationEnabled: updated.vendorRegistrationEnabled !== false,
+        vendorRegistrationEnabled: vendorEnabled,
         hero: { ...DEFAULT_HERO, ...(updated.hero || {}) },
         promo: { ...DEFAULT_PROMO, ...(updated.promo || {}) },
       });
-      setMessage("Settings saved successfully.");
+      setMessage(
+        vendorEnabled
+          ? "Settings saved. Vendor registration is enabled."
+          : "Settings saved. Vendor registration is disabled — new seller accounts cannot be created."
+      );
     } catch (err) {
       setError(err.message || "Failed to save settings");
     } finally {

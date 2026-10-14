@@ -1,19 +1,31 @@
 import Settings from "../models/Settings.js";
 
-function pickStorefront(settings) {
+/** Normalize settings so the vendor flag is always an explicit boolean in API responses. */
+function toSettingsPayload(settings) {
+  const obj = typeof settings.toObject === "function" ? settings.toObject() : { ...settings };
   return {
-    platformName: settings.platformName,
-    supportEmail: settings.supportEmail,
-    vendorRegistrationEnabled: settings.vendorRegistrationEnabled !== false,
-    hero: settings.hero || {},
-    promo: settings.promo || {},
+    ...obj,
+    vendorRegistrationEnabled: obj.vendorRegistrationEnabled !== false,
+  };
+}
+
+function pickStorefront(settings) {
+  const obj = typeof settings.toObject === "function" ? settings.toObject() : settings;
+  return {
+    platformName: obj.platformName,
+    supportEmail: obj.supportEmail,
+    // Explicit boolean so clients never treat a missing field as "enabled" by accident after disable.
+    vendorRegistrationEnabled: obj.vendorRegistrationEnabled !== false,
+    hero: obj.hero || {},
+    promo: obj.promo || {},
   };
 }
 
 export const getPublicSettings = async (req, res) => {
   try {
     const settings = await Settings.getSingleton();
-    res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
+    // Short cache — this flag must reflect admin changes quickly on the register page.
+    res.set("Cache-Control", "public, max-age=5, stale-while-revalidate=30");
     res.json(pickStorefront(settings));
   } catch (error) {
     console.error("Get public settings error:", error);
@@ -24,7 +36,7 @@ export const getPublicSettings = async (req, res) => {
 export const getSettings = async (req, res) => {
   try {
     const settings = await Settings.getSingleton();
-    res.json(settings);
+    res.json(toSettingsPayload(settings));
   } catch (error) {
     console.error("Get settings error:", error);
     res.status(500).json({ message: error.message || "Failed to load settings" });
@@ -77,8 +89,15 @@ export const updateSettings = async (req, res) => {
       settings.lowStockThreshold = value;
     }
 
+    // Always persist as a real boolean (false must stick on existing singleton docs).
     if (vendorRegistrationEnabled !== undefined) {
-      settings.vendorRegistrationEnabled = Boolean(vendorRegistrationEnabled);
+      const enabled =
+        vendorRegistrationEnabled === true ||
+        vendorRegistrationEnabled === "true" ||
+        vendorRegistrationEnabled === 1 ||
+        vendorRegistrationEnabled === "1";
+      settings.set("vendorRegistrationEnabled", enabled);
+      settings.markModified("vendorRegistrationEnabled");
     }
 
     // Admin-only storefront content (hero + promo band)
@@ -111,7 +130,10 @@ export const updateSettings = async (req, res) => {
     }
 
     await settings.save();
-    res.json(settings);
+
+    // Re-read so the response always matches what is in MongoDB.
+    const fresh = await Settings.getSingleton();
+    res.json(toSettingsPayload(fresh));
   } catch (error) {
     console.error("Update settings error:", error);
     res.status(500).json({ message: error.message || "Failed to update settings" });
