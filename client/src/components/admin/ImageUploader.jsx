@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Upload, Loader2, AlertCircle, X } from "lucide-react";
+// import { Button } from "@/components/ui/button";
+import { Upload, Loader2, AlertCircle } from "lucide-react";
 import { uploadImage } from "@/lib/upload";
 
 /**
