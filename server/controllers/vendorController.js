@@ -428,7 +428,8 @@ export const getPublicStore = async (req, res) => {
     })
       .sort({ createdAt: -1 })
       .limit(48)
-      .select("title price images discountPercentage ratings stock");
+      .select("title price images discountPercentage ratings stock category")
+      .populate("category", "name parentCategory");
 
     res.json({ vendor, products });
   } catch (error) {

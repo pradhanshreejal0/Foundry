@@ -4,10 +4,12 @@ import { MapPin, Package, Store as StoreIcon } from "lucide-react";
 import { api } from "@/lib/api";
 import { cloudinaryImage } from "@/lib/cloudinary";
 import { PriceTag } from "@/components/PriceTag";
+import { CategoryProductRows } from "@/components/CategoryProductRows";
 
 export default function Store() {
   const { slug } = useParams();
   const [data, setData] = useState(null);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -16,8 +18,18 @@ export default function Store() {
     (async () => {
       try {
         setLoading(true);
-        const res = await api(`/vendors/store/${encodeURIComponent(slug)}`);
-        if (!cancelled) setData(res);
+        const [res, categoryRes] = await Promise.all([
+          api(`/vendors/store/${encodeURIComponent(slug)}`),
+          api("/categories").catch(() => []),
+        ]);
+        if (!cancelled) {
+          setData(res);
+          setCategories(
+            Array.isArray(categoryRes)
+              ? categoryRes
+              : categoryRes?.categories || categoryRes?.data || [],
+          );
+        }
       } catch (err) {
         if (!cancelled) setError(err.message || "Store not found");
       } finally {
@@ -99,12 +111,14 @@ export default function Store() {
       {!products?.length ? (
         <p className="text-sm text-muted-foreground">No products yet.</p>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-          {products.map((p) => (
+        <CategoryProductRows
+          categories={categories}
+          products={products}
+          renderProduct={(p) => (
             <Link
               key={p._id}
               to={`/products/${p._id}`}
-              className="group overflow-hidden rounded-xl border bg-background transition hover:border-primary/40 hover:shadow-md"
+              className="group w-[min(78vw,250px)] shrink-0 overflow-hidden rounded-lg border bg-background transition hover:border-primary/40 hover:shadow-md"
             >
               <div className="aspect-square bg-muted">
                 {p.images?.[0] ? (
@@ -128,8 +142,8 @@ export default function Store() {
                 </div>
               </div>
             </Link>
-          ))}
-        </div>
+          )}
+        />
       )}
     </main>
   );

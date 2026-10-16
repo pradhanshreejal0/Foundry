@@ -13,6 +13,7 @@ import {
 import { api } from "@/lib/api";
 import { cloudinaryImage } from "@/lib/cloudinary";
 import { PriceTag } from "@/components/PriceTag";
+import { CategoryProductRows } from "@/components/CategoryProductRows";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -74,7 +75,7 @@ export default function Shop() {
         if (sortParam && sortParam !== "newest") params.set("sort", sortParam);
         if (minPriceParam) params.set("minPrice", minPriceParam);
         if (maxPriceParam) params.set("maxPrice", maxPriceParam);
-        params.set("limit", "24");
+        params.set("limit", "50");
         params.set("includeTotal", "false");
 
         const [productsRes, categoriesRes] = await Promise.all([
@@ -181,6 +182,113 @@ export default function Shop() {
     if (!product?.images?.length) return null;
     const first = product.images[0];
     return typeof first === "string" ? first : first?.url || null;
+  };
+
+  const renderProductCard = (product) => {
+    const image = getImage(product);
+
+    return (
+      <div
+        key={product._id}
+        className="group relative flex w-[min(78vw,250px)] shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10"
+      >
+        {Number(product.discountPercentage || 0) > 0 && (
+          <div className="absolute left-2 top-2 z-10 rounded bg-primary px-2 py-1 text-xs font-bold text-primary-foreground shadow-sm">
+            {product.discountPercentage}% OFF
+          </div>
+        )}
+        <Link
+          to={`/products/${product._id}`}
+          className="block aspect-square overflow-hidden bg-muted"
+        >
+          {image ? (
+            <img
+              src={cloudinaryImage(image, { width: 400 })}
+              srcSet={`${cloudinaryImage(image, { width: 300 })} 300w, ${cloudinaryImage(image, { width: 400 })} 400w, ${cloudinaryImage(image, { width: 600 })} 600w`}
+              sizes="(max-width: 640px) 78vw, 250px"
+              alt={product.title || "Product"}
+              loading="lazy"
+              className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              No image
+            </div>
+          )}
+        </Link>
+        <div className="flex flex-1 flex-col p-3">
+          <Link to={`/products/${product._id}`}>
+            <h3 className="min-h-10 line-clamp-2 text-sm font-medium hover:text-primary">
+              {product.title}
+            </h3>
+          </Link>
+          <div className="mt-2 flex items-center justify-between">
+            <PriceTag product={product} />
+          </div>
+          <div className="mt-3 flex items-center gap-2 border-t border-border/50 pt-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-8 flex-1 gap-1 text-xs"
+              disabled={actionLoadingId === product._id}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!user) {
+                  navigate("/login");
+                  return;
+                }
+                if (user.role !== "customer") {
+                  alert("Only customers can add items to cart");
+                  return;
+                }
+                try {
+                  setActionLoadingId(product._id);
+                  await addToCart(product._id, 1, "");
+                  alert("Added to cart successfully!");
+                } catch (err) {
+                  alert(err.message || "Failed to add to cart");
+                } finally {
+                  setActionLoadingId(null);
+                }
+              }}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              className="h-8 flex-1 gap-1 text-xs"
+              disabled={actionLoadingId === product._id}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!user) {
+                  navigate("/login");
+                  return;
+                }
+                if (user.role !== "customer") {
+                  alert("Only customers can checkout");
+                  return;
+                }
+                try {
+                  setActionLoadingId(product._id);
+                  await addToCart(product._id, 1, "");
+                  navigate("/checkout");
+                } catch (err) {
+                  alert(err.message || "Failed to proceed to checkout");
+                } finally {
+                  setActionLoadingId(null);
+                }
+              }}
+            >
+              <Zap className="h-3.5 w-3.5" />
+              Buy
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -483,114 +591,11 @@ export default function Shop() {
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {displayedProducts.map((product) => {
-            const image = getImage(product);
-            return (
-              <div
-                key={product._id}
-                className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10"
-              >
-                {Number(product.discountPercentage || 0) > 0 && (
-                  <div className="absolute left-2 top-2 z-10 rounded bg-primary px-2 py-1 text-xs font-bold text-primary-foreground shadow-sm">
-                    {product.discountPercentage}% OFF
-                  </div>
-                )}
-                <Link
-                  to={`/products/${product._id}`}
-                  className="aspect-square overflow-hidden bg-muted block"
-                >
-                  {image ? (
-                    <img
-                      src={cloudinaryImage(image, { width: 400 })}
-                      srcSet={`${cloudinaryImage(image, { width: 300 })} 300w, ${cloudinaryImage(image, { width: 400 })} 400w, ${cloudinaryImage(image, { width: 600 })} 600w`}
-                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"
-                      alt={product.title || "Product"}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                      No image
-                    </div>
-                  )}
-                </Link>
-                <div className="flex flex-1 flex-col p-3">
-                  <Link to={`/products/${product._id}`}>
-                    <h3 className="min-h-10 line-clamp-2 text-sm font-medium hover:text-primary">
-                      {product.title}
-                    </h3>
-                  </Link>
-                  <div className="mt-2 flex items-center justify-between">
-                    <PriceTag product={product} />
-                  </div>
-
-                  <div className="mt-3 flex items-center gap-2 pt-2 border-t border-border/50">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 gap-1 text-xs h-8"
-                      disabled={actionLoadingId === product._id}
-                      onClick={async (e) => {
-                        e.preventDefault();
-                        if (!user) {
-                          navigate("/login");
-                          return;
-                        }
-                        if (user.role !== "customer") {
-                          alert("Only customers can add items to cart");
-                          return;
-                        }
-                        try {
-                          setActionLoadingId(product._id);
-                          await addToCart(product._id, 1, "");
-                          alert("Added to cart successfully!");
-                        } catch (err) {
-                          alert(err.message || "Failed to add to cart");
-                        } finally {
-                          setActionLoadingId(null);
-                        }
-                      }}
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      Add
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      className="flex-1 gap-1 text-xs h-8"
-                      disabled={actionLoadingId === product._id}
-                      onClick={async (e) => {
-                        e.preventDefault();
-                        if (!user) {
-                          navigate("/login");
-                          return;
-                        }
-                        if (user.role !== "customer") {
-                          alert("Only customers can checkout");
-                          return;
-                        }
-                        try {
-                          setActionLoadingId(product._id);
-                          await addToCart(product._id, 1, "");
-                          navigate("/checkout");
-                        } catch (err) {
-                          alert(err.message || "Failed to proceed to checkout");
-                        } finally {
-                          setActionLoadingId(null);
-                        }
-                      }}
-                    >
-                      <Zap className="h-3.5 w-3.5" />
-                      Buy
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <CategoryProductRows
+          categories={categories}
+          products={displayedProducts}
+          renderProduct={renderProductCard}
+        />
       )}
     </main>
   );
