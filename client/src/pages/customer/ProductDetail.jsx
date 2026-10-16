@@ -1179,7 +1179,7 @@ export default function ProductDetails() {
 
       {/* Related products — same subcategory / category, horizontal scroll when many */}
       {relatedProducts.length > 0 && (
-        <div className="mt-12" data-scroll-animate="fade-in-up">
+        <div className="mt-12">
           <ProductCarousel
             products={relatedProducts}
             title={
@@ -1201,7 +1201,7 @@ export default function ProductDetails() {
 
       {/* Recommended products */}
       {recommendedProducts.length > 0 && (
-        <div className="mt-10 mb-6" data-scroll-animate="fade-in-up">
+        <div className="mt-10 mb-6">
           <ProductCarousel
             products={recommendedProducts}
             title="Recommended for you"

@@ -59,7 +59,6 @@ export function ProductCarousel({
   return (
     <section
       className={`relative ${className}`}
-      data-scroll-animate="fade-in-up"
     >
       {(title || link) && (
         <div className="mb-6 flex items-end justify-between gap-4 px-1">

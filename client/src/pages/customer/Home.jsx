@@ -92,7 +92,6 @@ function ProductShelf({ title, note, items, loading, link = "/products" }) {
   return (
     <section
       className="mx-auto max-w-310 px-6 pb-12 pt-20 sm:px-8"
-      data-scroll-animate="fade-in-up"
     >
       {loading ? (
         <>
@@ -284,7 +283,7 @@ export default function Home() {
       )}
 
       {/* —— Category grid —— */}
-      <section className="mx-auto max-w-310 px-6 pb-12 pt-20 sm:px-8" data-scroll-animate="fade-in-up">
+      <section className="mx-auto max-w-310 px-6 pb-12 pt-20 sm:px-8">
         <div className="mb-10 flex items-end justify-between gap-4">
           <div>
             <p className="mb-1.5 text-[11px] text-muted-foreground">A good place to begin</p>
