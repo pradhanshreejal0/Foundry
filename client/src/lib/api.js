@@ -1,6 +1,6 @@
 // Backend URL: set VITE_API_URL in client/.env, otherwise use the deployed API.
 const API_BASE =
-  import.meta.env.VITE_API_URL || "https://finalecommercewebsite-backend.onrender.com/api";
+  import.meta.env.VITE_API_URL || "https://foundry-zycd.onrender.com/api";
 
 /**
  * Central fetch helper used by every page.
