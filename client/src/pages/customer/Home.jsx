@@ -92,6 +92,7 @@ function ProductShelf({ title, note, items, loading, link = "/products" }) {
   return (
     <section
       className="mx-auto max-w-310 px-6 pb-12 pt-20 sm:px-8"
+      data-scroll-animate="fade-in-up"
     >
       {loading ? (
         <>
@@ -170,6 +171,7 @@ export default function Home() {
   const [homeAds, setHomeAds] = useState([]);
   const [hero, setHero] = useState(DEFAULT_HERO);
   const [promo, setPromo] = useState(DEFAULT_PROMO);
+  const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -182,6 +184,7 @@ export default function Home() {
       api("/categories"),
       api("/ads"),
       api("/settings/public"),
+      api("/homepage/public"),
     ]).then((results) => {
       if (cancelled) return;
 
@@ -206,6 +209,11 @@ export default function Home() {
         if (s.promo) setPromo({ ...DEFAULT_PROMO, ...s.promo });
       }
 
+      if (results[6].status === "fulfilled" && results[6].value?.sections) {
+        const layoutSections = Array.isArray(results[6].value.sections) ? results[6].value.sections : [];
+        setSections(layoutSections.filter((s) => s.visible !== false).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
+      }
+
       setLoading(false);
     });
 
@@ -228,165 +236,199 @@ export default function Home() {
   const midAds = homeAds.length > 1 ? homeAds.slice(1) : homeAds;
   const heroImage = hero.imageUrl || DEFAULT_HERO.imageUrl;
 
+  // If dynamic sections are configured from the admin layout builder, render them in order.
+  // Otherwise fall back to the default layout sequence.
+  const renderSection = (section, idx) => {
+    const type = section.type;
+    const secTitle = section.title;
+    const secSubtitle = section.subtitle;
+
+    switch (type) {
+      case "hero":
+        if (hero.visible === false) return null;
+        return (
+          <section
+            key={section.id || idx}
+            className="relative mx-auto flex min-h-116 max-w-360 items-center bg-primary bg-cover bg-center px-[max(7.1%,calc((100vw-1240px)/2))] py-15 text-primary-foreground"
+            style={{
+              backgroundImage: `linear-gradient(100deg, color-mix(in srgb, var(--primary) 85%, black), transparent), url("${heroImage}")`,
+            }}
+          >
+            <div className="max-w-lg">
+              <span className="mb-5 flex items-center gap-2 text-xs opacity-90">
+                <Sparkles size={15} /> {hero.kicker || DEFAULT_HERO.kicker}
+              </span>
+              <h1 className="mb-4 max-w-120 whitespace-pre-line font-heading text-[clamp(42px,5.1vw,67px)] font-bold leading-[1.08] tracking-[-0.04em]">
+                {hero.title || DEFAULT_HERO.title}
+              </h1>
+              <p className="mb-7 max-w-98 text-[15px] leading-[1.7] opacity-90">
+                {hero.subtitle || DEFAULT_HERO.subtitle}
+              </p>
+              <Link
+                to={hero.ctaLink || "/products"}
+                className="inline-flex min-h-12 items-center justify-center gap-3 rounded-md bg-card px-5 text-[13px] font-semibold text-card-foreground transition hover:-translate-y-px hover:bg-secondary"
+              >
+                {hero.ctaText || DEFAULT_HERO.ctaText} <ArrowRight size={17} />
+              </Link>
+            </div>
+            <div className="absolute bottom-5 left-[max(32px,calc((100vw-1240px)/2))] right-[max(32px,calc((100vw-1240px)/2))] flex justify-between text-[10px] tracking-wider opacity-80">
+              <span>{hero.captionLeft || DEFAULT_HERO.captionLeft}</span>
+              <span>{hero.captionRight || DEFAULT_HERO.captionRight}</span>
+            </div>
+          </section>
+        );
+
+      case "trust":
+        return (
+          <div key={section.id || idx} className="flex min-h-16 flex-wrap items-center justify-center gap-8 bg-secondary px-4 text-[11px] text-secondary-foreground sm:gap-22">
+            <span>
+              <i className="mr-1.5 text-[15px] not-italic text-primary">✓</i> {secTitle || "A little better, every day"}
+            </span>
+            <span>
+              <i className="mr-1.5 text-[15px] not-italic text-primary">✓</i> Easy, reliable delivery
+            </span>
+            <span>
+              <i className="mr-1.5 text-[15px] not-italic text-primary">✓</i> Help from real people
+            </span>
+          </div>
+        );
+
+      case "categories":
+        return (
+          <section key={section.id || idx} className="mx-auto max-w-310 px-6 pb-12 pt-20 sm:px-8">
+            <div className="mb-10 flex items-end justify-between gap-4">
+              <div>
+                <p className="mb-1.5 text-[11px] text-muted-foreground">{secSubtitle || "A good place to begin"}</p>
+                <h2 className="font-heading text-[28px] font-bold tracking-tight text-foreground sm:text-[32px]">
+                  {secTitle || "Browse by mood"}
+                </h2>
+              </div>
+              <Link
+                to="/categories"
+                className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-primary transition-colors hover:opacity-80"
+              >
+                All departments <ArrowRight size={17} />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+              {categoryTiles.map((item, index) => (
+                <Link
+                  key={item.name + index}
+                  to={
+                    item.id
+                      ? `/products?category=${item.id}`
+                      : `/products?search=${encodeURIComponent(item.name)}`
+                  }
+                  className="group relative flex min-h-55 flex-col justify-end overflow-hidden rounded-lg bg-cover bg-center p-4 text-primary-foreground sm:min-h-65"
+                  style={{
+                    backgroundImage: `linear-gradient(0deg, color-mix(in srgb, var(--foreground) 55%, transparent), transparent 74%), url("${item.image}")`,
+                  }}
+                >
+                  <span className="text-[11px] opacity-80">{item.line}</span>
+                  <strong className="mt-0.5 font-heading text-lg font-bold tracking-tight sm:text-xl">
+                    {item.name}
+                  </strong>
+                  <ArrowUpRight
+                    className="absolute right-3 top-3 opacity-80 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    size={19}
+                  />
+                </Link>
+              ))}
+            </div>
+          </section>
+        );
+
+      case "featured":
+        return (
+          <ProductShelf
+            key={section.id || idx}
+            title={secTitle || "Worth a closer look"}
+            note={secSubtitle || "Picked with intention"}
+            items={featured.length ? featured : bestsellers}
+            loading={loading}
+            link="/products?sort=rating"
+          />
+        );
+
+      case "bestsellers":
+        return (
+          <ProductShelf
+            key={section.id || idx}
+            title={secTitle || "Fresh to the shelves"}
+            note={secSubtitle || "Just landed"}
+            items={newest.length ? newest : bestsellers}
+            loading={loading}
+            link="/products?sort=newest"
+          />
+        );
+
+      case "promo":
+        if (promo.visible === false) return null;
+        return (
+          <section key={section.id || idx} className="mx-auto my-10 grid min-h-83 max-w-294 overflow-hidden bg-secondary md:grid-cols-2">
+            <div className="flex flex-col justify-center px-8 py-11 text-secondary-foreground sm:px-13">
+              <span className="inline-block w-fit bg-accent px-2.5 py-1.5 text-[9px] font-semibold tracking-[0.08em] text-accent-foreground">
+                {promo.badge || DEFAULT_PROMO.badge}
+              </span>
+              <h2 className="mt-5 mb-2.5 whitespace-pre-line font-heading text-[36px] font-bold leading-[1.12] tracking-tight text-foreground sm:text-[40px]">
+                {secTitle || promo.title || DEFAULT_PROMO.title}
+              </h2>
+              <p className="mb-5 text-xs text-muted-foreground">
+                {secSubtitle || promo.subtitle || DEFAULT_PROMO.subtitle}
+              </p>
+              <Link
+                to={promo.ctaLink || "/products"}
+                className="inline-flex w-fit min-h-12 items-center justify-center gap-2 rounded-md bg-primary px-5 text-[13px] font-semibold text-primary-foreground transition hover:-translate-y-px hover:opacity-90"
+              >
+                {promo.ctaText || DEFAULT_PROMO.ctaText} <ChevronRight size={17} />
+              </Link>
+            </div>
+            <img
+              src={promo.imageUrl || DEFAULT_PROMO.imageUrl}
+              alt="Promotional"
+              loading="lazy"
+              className="h-full min-h-70 w-full object-cover md:min-h-83"
+            />
+          </section>
+        );
+
+      case "ads":
+        return topAds.length > 0 ? (
+          <div key={section.id || idx} className="mx-auto max-w-310 px-6 pt-8 sm:px-8">
+            <AdBanner ads={topAds} variant="banner" />
+          </div>
+        ) : null;
+
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* —— Hero (admin-editable) —— */}
-      {hero.visible !== false && (
-        <section
-          className="relative mx-auto flex min-h-116 max-w-360 items-center bg-primary bg-cover bg-center px-[max(7.1%,calc((100vw-1240px)/2))] py-15 text-primary-foreground"
-          style={{
-            backgroundImage: `linear-gradient(100deg, color-mix(in srgb, var(--primary) 85%, black), transparent), url("${heroImage}")`,
-          }}
-        >
-          <div className="max-w-lg">
-            <span className="mb-5 flex items-center gap-2 text-xs opacity-90">
-              <Sparkles size={15} /> {hero.kicker || DEFAULT_HERO.kicker}
-            </span>
-            <h1 className="mb-4 max-w-120 whitespace-pre-line font-heading text-[clamp(42px,5.1vw,67px)] font-bold leading-[1.08] tracking-[-0.04em]">
-              {hero.title || DEFAULT_HERO.title}
-            </h1>
-            <p className="mb-7 max-w-98 text-[15px] leading-[1.7] opacity-90">
-              {hero.subtitle || DEFAULT_HERO.subtitle}
-            </p>
-            <Link
-              to={hero.ctaLink || "/products"}
-              className="inline-flex min-h-12 items-center justify-center gap-3 rounded-md bg-card px-5 text-[13px] font-semibold text-card-foreground transition hover:-translate-y-px hover:bg-secondary"
-            >
-              {hero.ctaText || DEFAULT_HERO.ctaText} <ArrowRight size={17} />
-            </Link>
-          </div>
-          <div className="absolute bottom-5 left-[max(32px,calc((100vw-1240px)/2))] right-[max(32px,calc((100vw-1240px)/2))] flex justify-between text-[10px] tracking-wider opacity-80">
-            <span>{hero.captionLeft || DEFAULT_HERO.captionLeft}</span>
-            <span>{hero.captionRight || DEFAULT_HERO.captionRight}</span>
-          </div>
-        </section>
-      )}
-
-      {/* —— Trust strip —— */}
-      <div className="flex min-h-16 flex-wrap items-center justify-center gap-8 bg-secondary px-4 text-[11px] text-secondary-foreground sm:gap-22">
-        <span>
-          <i className="mr-1.5 text-[15px] not-italic text-primary">✓</i> A little better, every day
-        </span>
-        <span>
-          <i className="mr-1.5 text-[15px] not-italic text-primary">✓</i> Easy, reliable delivery
-        </span>
-        <span>
-          <i className="mr-1.5 text-[15px] not-italic text-primary">✓</i> Help from real people
-        </span>
-      </div>
-
-      {/* —— Ad slot A —— */}
-      {topAds.length > 0 && (
+      {topAds.length > 0 && sections.length === 0 && (
         <div className="mx-auto max-w-310 px-6 pt-8 sm:px-8">
           <AdBanner ads={topAds} variant="banner" />
         </div>
       )}
 
-      {/* —— Category grid —— */}
-      <section className="mx-auto max-w-310 px-6 pb-12 pt-20 sm:px-8">
-        <div className="mb-10 flex items-end justify-between gap-4">
-          <div>
-            <p className="mb-1.5 text-[11px] text-muted-foreground">A good place to begin</p>
-            <h2 className="font-heading text-[28px] font-bold tracking-tight text-foreground sm:text-[32px]">
-              Browse by mood
-            </h2>
-          </div>
-          <Link
-            to="/categories"
-            className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-primary transition-colors hover:opacity-80"
-          >
-            All departments <ArrowRight size={17} />
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-          {categoryTiles.map((item, index) => (
-            <Link
-              key={item.name + index}
-              to={
-                item.id
-                  ? `/products?category=${item.id}`
-                  : `/products?search=${encodeURIComponent(item.name)}`
-              }
-              className="group relative flex min-h-55 flex-col justify-end overflow-hidden rounded-lg bg-cover bg-center p-4 text-primary-foreground sm:min-h-65"
-              style={{
-                backgroundImage: `linear-gradient(0deg, color-mix(in srgb, var(--foreground) 55%, transparent), transparent 74%), url("${item.image}")`,
-              }}
-            >
-              <span className="text-[11px] opacity-80">{item.line}</span>
-              <strong className="mt-0.5 font-heading text-lg font-bold tracking-tight sm:text-xl">
-                {item.name}
-              </strong>
-              <ArrowUpRight
-                className="absolute right-3 top-3 opacity-80 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                size={19}
-              />
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* —— Featured —— */}
-      <ProductShelf
-        title="Worth a closer look"
-        note="Picked with intention"
-        items={featured.length ? featured : bestsellers}
-        loading={loading}
-        link="/products?sort=rating"
-      />
-
-      {/* —— Ad slot B —— */}
-      {midAds.length > 0 && (
-        <div className="mx-auto max-w-310 px-6 py-6 sm:px-8">
-          <AdBanner ads={midAds} variant={midAds.length > 1 ? "carousel" : "banner"} />
-        </div>
-      )}
-
-      {/* —— Promo band (admin-editable) —— */}
-      {promo.visible !== false && (
-        <section className="mx-auto my-10 grid min-h-83 max-w-294 overflow-hidden bg-secondary md:grid-cols-2">
-          <div className="flex flex-col justify-center px-8 py-11 text-secondary-foreground sm:px-13">
-            <span className="inline-block w-fit bg-accent px-2.5 py-1.5 text-[9px] font-semibold tracking-[0.08em] text-accent-foreground">
-              {promo.badge || DEFAULT_PROMO.badge}
-            </span>
-            <h2 className="mt-5 mb-2.5 whitespace-pre-line font-heading text-[36px] font-bold leading-[1.12] tracking-tight text-foreground sm:text-[40px]">
-              {promo.title || DEFAULT_PROMO.title}
-            </h2>
-            <p className="mb-5 text-xs text-muted-foreground">
-              {promo.subtitle || DEFAULT_PROMO.subtitle}
-            </p>
-            <Link
-              to={promo.ctaLink || "/products"}
-              className="inline-flex w-fit min-h-12 items-center justify-center gap-2 rounded-md bg-primary px-5 text-[13px] font-semibold text-primary-foreground transition hover:-translate-y-px hover:opacity-90"
-            >
-              {promo.ctaText || DEFAULT_PROMO.ctaText} <ChevronRight size={17} />
-            </Link>
-          </div>
-          <img
-            src={promo.imageUrl || DEFAULT_PROMO.imageUrl}
-            alt="Promotional"
-            loading="lazy"
-            className="h-full min-h-70 w-full object-cover md:min-h-83"
-          />
-        </section>
-      )}
-
-      {/* —— New arrivals —— */}
-      <ProductShelf
-        title="Fresh to the shelves"
-        note="Just landed"
-        items={newest}
-        loading={loading}
-        link="/products?sort=newest"
-      />
-
-      {bestsellers.length > 0 && (
-        <ProductShelf
-          title="Loved by many"
-          note="Crowd favorites"
-          items={bestsellers}
-          loading={loading}
-          link="/products?sort=rating"
-        />
+      {sections.length > 0 ? (
+        sections.map((sec, idx) => renderSection(sec, idx))
+      ) : (
+        <>
+          {/* Default fallback layout if no builder sections saved yet */}
+          {renderSection({ type: "hero" }, 0)}
+          {renderSection({ type: "trust" }, 1)}
+          {renderSection({ type: "categories" }, 2)}
+          {renderSection({ type: "featured" }, 3)}
+          {midAds.length > 0 && (
+            <div className="mx-auto max-w-310 px-6 py-6 sm:px-8">
+              <AdBanner ads={midAds} variant={midAds.length > 1 ? "carousel" : "banner"} />
+            </div>
+          )}
+          {renderSection({ type: "promo" }, 4)}
+          {renderSection({ type: "bestsellers" }, 5)}
+        </>
       )}
 
       <div className="h-12" />
