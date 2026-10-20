@@ -26,6 +26,13 @@ const cleanBrands = (values) => [...new Set(values.flatMap((value) => String(val
   .map((value) => value.trim())
   .filter(Boolean);
 
+export function mergeBrandOptions(selectedBrands = [], discoveredBrands = []) {
+  return cleanBrands([
+    ...(Array.isArray(selectedBrands) ? selectedBrands : [selectedBrands]),
+    ...(Array.isArray(discoveredBrands) ? discoveredBrands : [discoveredBrands]),
+  ]);
+}
+
 export function parseProductQuery(input) {
   const params = input instanceof URLSearchParams ? input : new URLSearchParams(input);
   const sort = params.get("sort");
@@ -59,8 +66,8 @@ export function serializeProductQuery(query = {}) {
   if (state.minPrice !== "" && state.minPrice != null) params.set("minPrice", state.minPrice);
   if (state.maxPrice !== "" && state.maxPrice != null) params.set("maxPrice", state.maxPrice);
   if (state.minRating !== "" && state.minRating != null) params.set("minRating", state.minRating);
-  if (state.inStock) params.set("inStock", "1");
-  if (state.onSale) params.set("onSale", "1");
+  if (state.inStock) params.set("inStock", "true");
+  if (state.onSale) params.set("onSale", "true");
   if (state.sort !== "newest" && SUPPORTED_PRODUCT_SORTS.includes(state.sort)) params.set("sort", state.sort);
   if (Number(state.page) > 1) params.set("page", String(state.page));
   if (Number(state.limit) !== DEFAULT_PRODUCT_QUERY.limit) params.set("limit", String(state.limit));

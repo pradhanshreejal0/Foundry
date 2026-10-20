@@ -385,7 +385,7 @@ export default function Home() {
           note="Crowd favorites"
           items={bestsellers}
           loading={loading}
-          link="/products?sort=bestsellers"
+          link="/products?sort=rating"
         />
       )}
 

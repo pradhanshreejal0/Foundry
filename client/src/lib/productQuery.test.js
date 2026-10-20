@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseProductQuery, serializeProductQuery } from "./productQuery.js";
+import { mergeBrandOptions, parseProductQuery, serializeProductQuery } from "./productQuery.js";
 
 test("migrates q and round-trips multi-brand filters", () => {
   const parsed = parseProductQuery("q=lamp&brand=Acme&brand=North%20Star&page=3");
@@ -19,10 +19,17 @@ test("omits defaults and normalizes unsupported sort", () => {
   assert.equal(parseProductQuery("sort=featured").sort, "newest");
 });
 
+test("retains selected brands before discovered options, stably deduplicated", () => {
+  assert.deepEqual(
+    mergeBrandOptions(["North Star", "Acme"], ["Acme", "Cedar", "North Star", "Cedar"]),
+    ["North Star", "Acme", "Cedar"],
+  );
+});
+
 test("boolean filters and canonical values serialize", () => {
   const params = serializeProductQuery({ search: "chair", inStock: true, onSale: true, minRating: "4", page: 1 });
   assert.equal(params.get("search"), "chair");
-  assert.equal(params.get("inStock"), "1");
-  assert.equal(params.get("onSale"), "1");
+  assert.equal(params.get("inStock"), "true");
+  assert.equal(params.get("onSale"), "true");
   assert.equal(params.get("minRating"), "4");
 });
