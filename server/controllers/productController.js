@@ -4,6 +4,12 @@ import Category from "../models/Category.js";
 import Order from "../models/Order.js";
 import { escapeRegex } from "../utils/escapeRegex.js";
 import { buildBestSellerPipeline, orderProductsBySales } from "../utils/productRanking.js";
+import {
+  normalizeBrand,
+  parseProductFilters,
+  buildProductFilterQuery,
+  buildProductSort,
+} from "../utils/productFilters.js";
 
 
 // Normalize vendor description sections (max 4). Also builds a plain-text description for search.
@@ -177,6 +183,7 @@ export const createProduct = async (req, res) => {
 
     const {
       title,
+      brand,
       description,
       descriptionSections,
       descriptionStyle,
@@ -188,6 +195,14 @@ export const createProduct = async (req, res) => {
       hasVariants,
       variants,
     } = req.body;
+
+    // Validate brand
+    let normalizedBrand;
+    try {
+      normalizedBrand = normalizeBrand(brand);
+    } catch (brandError) {
+      return res.status(brandError.statusCode || 400).json({ message: brandError.message });
+    }
 
     // Validate title
     if (!title || !String(title).trim()) {
@@ -287,6 +302,8 @@ export const createProduct = async (req, res) => {
 
     const product = await Product.create({
       title: String(title).trim(),
+      brand: normalizedBrand.display,
+      brandNormalized: normalizedBrand.normalized,
       description: plain,
       descriptionSections: sections,
       descriptionStyle: style,
@@ -505,187 +522,89 @@ Tone: professional, persuasive, customer-focused. Do not use markdown headings. 
 // Public: Get all published products (with pagination)
 export const getProducts = async (req, res) => {
   try {
-    const {
-      search = "",
-      category = "",
-      minPrice = "",
-      maxPrice = "",
-      sort = "newest",
-      section = "",
-      page = 1,
-      limit = 20,
-      includeTotal = "true",
-      compact = "false",
-    } = req.query;
+    const filters = parseProductFilters(req.query);
+    const compactResponse = req.query.compact === "true";
+    let categoryIds;
 
-    const pageNum = Math.max(1, parseInt(page) || 1);
-    const limitNum = Math.min(50, Math.max(1, parseInt(limit) || 20));
-    const skip = (pageNum - 1) * limitNum;
-    const shouldIncludeTotal = includeTotal !== "false";
-    const compactResponse = compact === "true";
-
-    const filter = {
-      isPublished: true,
-    };
-
-    // Full-text search using the text index already defined on the schema
-    // (`{ title: "text", description: "text" }`). Uses the index, gives
-    // relevance ranking (via textScore) and basic word-stemming
-    // (e.g. "shoe" also matches "shoes").
-    const searchTerm = search.trim();
-    if (searchTerm) {
-      filter.$text = { $search: searchTerm };
-    }
-
-    // Category filter
-    if (category) {
-      // One query instead of a parent lookup followed by a child lookup.
-      // This matters on every filtered Shop request.
-      const categoryIds = await Category.find({
-        $or: [{ _id: category }, { parentCategory: category }],
-      })
-        .select("_id")
-        .lean();
-
-      if (categoryIds.length === 0) {
+    if (filters.categoryId) {
+      const categories = await Category.find({
+        $or: [{ _id: filters.categoryId }, { parentCategory: filters.categoryId }],
+      }).select("_id").lean();
+      if (categories.length === 0) {
         return res.status(400).json({ message: "Selected category does not exist" });
       }
-
-      filter.category = {
-        $in: categoryIds.map((item) => item._id),
-      };
+      categoryIds = categories.map(({ _id }) => _id);
     }
 
-    // Price filter
-    if (minPrice !== "" || maxPrice !== "") {
-      filter.price = {};
-      if (minPrice !== "") {
-        const minimum = Number(minPrice);
-        if (!Number.isFinite(minimum) || minimum < 0) {
-          return res.status(400).json({ message: "Invalid minimum price" });
+    const filter = buildProductFilterQuery(filters, { categoryIds });
+    const sortOption = buildProductSort(filters.sort);
+    const projection = compactResponse
+      ? {
+          title: 1,
+          brand: 1,
+          brandNormalized: 1,
+          price: 1,
+          images: 1,
+          category: 1,
+          vendor: 1,
+          discountPercentage: 1,
+          ratings: 1,
+          stock: 1,
         }
-        filter.price.$gte = minimum;
-      }
-      if (maxPrice !== "") {
-        const maximum = Number(maxPrice);
-        if (!Number.isFinite(maximum) || maximum < 0) {
-          return res.status(400).json({ message: "Invalid maximum price" });
-        }
-        filter.price.$lte = maximum;
-      }
-      if (
-        filter.price.$gte !== undefined &&
-        filter.price.$lte !== undefined &&
-        filter.price.$gte > filter.price.$lte
-      ) {
-        return res.status(400).json({
-          message: "Minimum price cannot be greater than maximum price",
-        });
-      }
-    }
-
-    // Sorting — default to relevance when searching (unless the caller
-    // explicitly asked for a price/oldest sort, which still wins).
-    let sortOption = { createdAt: -1 };
-    let projection = null;
-
-    if (searchTerm) {
-      projection = { score: { $meta: "textScore" } };
-      sortOption = { score: { $meta: "textScore" } };
-    }
-
-    if (sort === "price_asc") sortOption = { price: 1 };
-    if (sort === "price_desc") sortOption = { price: -1 };
-    if (sort === "oldest") sortOption = { createdAt: 1 };
-
-    let findProjection = projection;
-
-    if (compactResponse) {
-      // Product cards do not need descriptions, variants, timestamps, views,
-      // or other large fields. Keep the full response available for detail/admin pages.
-      findProjection = {
-        title: 1,
-        price: 1,
-        images: 1,
-        category: 1,
-        vendor: 1,
-        discountPercentage: 1,
-        ratings: 1,
-        stock: 1,
-        ...(searchTerm ? { score: { $meta: "textScore" } } : {}),
-      };
-    }
-
-    const productsQuery = Product.find(filter, findProjection)
+      : null;
+    const populate = (query) => query
       .populate("category", "name parentCategory")
       .populate({
         path: "vendor",
         select: compactResponse ? "storeName storeSlug logo" : "storeName storeSlug logo banner",
-      })
+      });
+
+    const skip = (filters.page - 1) * filters.limit;
+    let productsQuery = populate(Product.find(filter, projection))
       .sort(sortOption)
       .skip(skip)
-      .limit(limitNum)
+      .limit(filters.limit)
       .lean();
 
-    let products;
     let total = null;
-
-    if (shouldIncludeTotal) {
-      [products, total] = await Promise.all([
-        productsQuery,
-        Product.countDocuments(filter),
-      ]);
-    } else {
-      products = await productsQuery;
+    if (filters.includeTotal) {
+      [productsQuery, total] = await Promise.all([productsQuery, Product.countDocuments(filter)]);
     }
+    let products = await productsQuery;
 
-    // Home sections share the public listing filters; only their ranking differs.
-    if (["bestsellers", "featured"].includes(section)) {
-      if (section === "bestsellers") {
-        const sales = await Order.aggregate(buildBestSellerPipeline());
-        const rankedIds = sales.map((item) => item._id);
-        const rankedProducts = await Product.find({
-          ...filter,
-          _id: { $in: rankedIds },
-        }, findProjection)
-          .populate("category", "name parentCategory")
-          .populate({
-            path: "vendor",
-            select: compactResponse ? "storeName storeSlug logo" : "storeName storeSlug logo banner",
-          })
-          .lean();
-        products = orderProductsBySales(rankedProducts, sales).slice(skip, skip + limitNum);
-      } else {
-        products = await Product.find(filter, findProjection)
-          .populate("category", "name parentCategory")
-          .populate({
-            path: "vendor",
-            select: compactResponse ? "storeName storeSlug logo" : "storeName storeSlug logo banner",
-          })
-          .sort({ "ratings.average": -1, "ratings.count": -1, createdAt: -1 })
-          .skip(skip)
-          .limit(limitNum)
-          .lean();
-      }
+    // Home sections retain their established ranking while using the same predicates.
+    const section = Array.isArray(req.query.section) ? req.query.section[0] : req.query.section;
+    if (section === "bestsellers") {
+      const sales = await Order.aggregate(buildBestSellerPipeline());
+      const rankedIds = sales.map((item) => item._id);
+      const ranked = await populate(Product.find({ ...filter, _id: { $in: rankedIds } }, projection)).lean();
+      products = orderProductsBySales(ranked, sales).slice(skip, skip + filters.limit);
+    } else if (section === "featured") {
+      products = await populate(Product.find(filter, projection))
+        .sort({ "ratings.average": -1, "ratings.count": -1, createdAt: -1 })
+        .skip(skip)
+        .limit(filters.limit)
+        .lean();
     }
 
     res.json({
       products,
       pagination: {
-        page: pageNum,
-        limit: limitNum,
+        page: filters.page,
+        limit: filters.limit,
         total,
-        pages: total == null ? null : Math.ceil(total / limitNum),
+        pages: total === null ? null : Math.ceil(total / filters.limit),
       },
     });
   } catch (error) {
     console.error("Get products error:", error);
+    if (error?.statusCode === 400) {
+      return res.status(400).json({ message: error.message });
+    }
     if (error.name === "CastError") {
       return res.status(400).json({ message: "Invalid category ID" });
     }
-    res.status(500).json({
-      message: error.message || "Failed to load products",
-    });
+    res.status(500).json({ message: error.message || "Failed to load products" });
   }
 };
 
@@ -755,6 +674,7 @@ export const updateProduct = async (req, res) => {
 
     const {
       title,
+      brand,
       description,
       descriptionSections,
       descriptionStyle,
@@ -779,6 +699,17 @@ export const updateProduct = async (req, res) => {
       }
 
       product.title = trimmedTitle;
+    }
+
+    // Brand is optional on update so legacy products without one remain editable.
+    if (brand !== undefined) {
+      try {
+        const normalizedBrand = normalizeBrand(brand);
+        product.brand = normalizedBrand.display;
+        product.brandNormalized = normalizedBrand.normalized;
+      } catch (brandError) {
+        return res.status(brandError.statusCode || 400).json({ message: brandError.message });
+      }
     }
 
     // Description sections + style (vendor-controlled layout)
