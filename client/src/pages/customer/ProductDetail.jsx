@@ -10,7 +10,7 @@ import { PriceTag } from "@/components/PriceTag";
 import { ProductCarousel } from "@/components/ProductCarousel";
 import { cn, getFinalPrice } from "@/lib/utils";
 import { cloudinaryImage } from "@/lib/cloudinary";
-import { Heart, MessageCircle, Sparkles, Package, Plus, Minus, Zap } from "lucide-react";
+import { Heart, MessageCircle, Sparkles, Package, Plus, Minus, Zap, Star } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -52,15 +52,21 @@ function ProductCard({ product }) {
         )}
       </div>
       <div className="flex flex-1 flex-col gap-1 p-3">
+        {product.brand && (
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            {product.brand}
+          </span>
+        )}
         <p className="line-clamp-2 text-sm font-medium leading-snug group-hover:text-primary">
           {product.title}
         </p>
-        <div className="mt-auto flex items-center gap-2">
+        <div className="mt-auto flex items-center justify-between">
           <span className="text-sm font-bold">RS {Number(price).toFixed(0)}</span>
-          {product.discountPercentage > 0 && (
-            <span className="text-xs text-muted-foreground line-through">
-              RS {Number(product.price).toFixed(0)}
-            </span>
+          {product.ratings?.average > 0 && (
+            <div className="flex items-center gap-1 text-xs text-amber-500 font-semibold">
+              <Star className="h-3 w-3 fill-current" />
+              <span>{Number(product.ratings.average).toFixed(1)}</span>
+            </div>
           )}
         </div>
       </div>
@@ -529,65 +535,60 @@ export default function ProductDetails() {
 
         {/* Product Information */}
         <div>
-
-          {/* Category */}
-          {product.category?.name && (
-            <p className="text-sm text-muted-foreground">
-              {product.category.name}
-            </p>
-          )}
+          {/* Brand & Category Header */}
+          <div className="flex items-center justify-between">
+            {product.brand ? (
+              <span className="inline-flex items-center rounded-md bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary tracking-wider uppercase">
+                {product.brand}
+              </span>
+            ) : <span />}
+            {product.category?.name && (
+              <span className="text-sm text-muted-foreground font-medium">
+                {product.category.name}
+              </span>
+            )}
+          </div>
 
           {/* Title */}
-          <h1 className="mt-2 text-3xl font-bold">
+          <h1 className="mt-3 text-3xl font-bold tracking-tight">
             {product.title}
           </h1>
 
-          {/* Ratings */}
-          {product.ratings?.count > 0 && (
-            <div className="mt-2 flex items-center gap-2">
-              <StarRating value={product.ratings.average} readOnly size={16} />
-              <span className="text-sm text-muted-foreground">
-                {product.ratings.average} ({product.ratings.count} review
-                {product.ratings.count !== 1 ? "s" : ""})
-              </span>
+          {/* Ratings & Average Rating Display */}
+          <div className="mt-3 flex items-center gap-3">
+            <div className="flex items-center text-amber-500">
+              <StarRating value={product.ratings?.average || 0} readOnly size={18} />
             </div>
-          )}
-
-          {/* Vendor */}
-          {/* {product.vendor?.storeName && (
-            <p className="mt-2 text-muted-foreground">
-              Sold by{" "}
-              <span className="font-medium text-foreground">
-                {product.vendor.storeName}
-              </span>
-            </p>
-          )}*/}
+            <span className="text-sm font-semibold text-foreground">
+              {Number(product.ratings?.average || 0).toFixed(1)} / 5.0
+            </span>
+            <span className="text-sm text-muted-foreground">
+              ({product.ratings?.count || 0} customer review{product.ratings?.count !== 1 ? "s" : ""})
+            </span>
+          </div>
 
           {/* Chat with us */}
           {(!user || user.role === "customer") && (
-            <div className="mt-2">
+            <div className="mt-4">
               <button
                 type="button"
                 onClick={handleOpenChat}
                 className="inline-flex items-center gap-1.5 rounded-full border border-info/30 bg-info/10 px-3 py-1 text-sm font-medium text-info-foreground transition hover:bg-info/10"
               >
                 <MessageCircle className="h-3.5 w-3.5" />
-                Chat with us
+                Chat with vendor/support
               </button>
             </div>
           )}
 
           {/* Price */}
-          <div className="mt-6">
+          <div className="mt-6 border-y py-4">
             {product.hasVariants &&
               Array.isArray(product.variants) &&
               product.variants.length > 0 && (
-                <div className="space-y-4">
+                <div className="space-y-4 mb-4">
                   {(() => {
-                    // Normalize attribute name for consistent matching
                     const normName = (n) => String(n || "").trim();
-
-                    // Group attribute names (Size, Color, …) from all variants
                     const attrNames = [];
                     for (const v of product.variants) {
                       for (const a of v.attributes || []) {
@@ -633,7 +634,6 @@ export default function ProductDetails() {
                       return null;
                     };
 
-                    // Exactly one selected value per attribute (from selected variant)
                     const selectedMap = {};
                     let selectedLabel = "";
                     if (selectedVariantKey) {
@@ -662,7 +662,6 @@ export default function ProductDetails() {
                       return [...set];
                     };
 
-                    // Cascading filter: only show values compatible with other selections
                     const valuesFor = (name) => {
                       const set = new Set();
                       for (const v of product.variants) {
@@ -745,7 +744,6 @@ export default function ProductDetails() {
                     };
 
                     const pick = (name, value) => {
-                      // Click same value again = deselect
                       if (selectedMap[name] === value) {
                         const remaining = { ...selectedMap };
                         delete remaining[name];
@@ -792,7 +790,6 @@ export default function ProductDetails() {
 
                     return (
                       <>
-                        {/* Visible summary of current selection */}
                         <div className="rounded-lg border bg-muted/40 px-3 py-2 text-sm">
                           {selectedVariantKey && selectedLabel ? (
                             <p>
@@ -1065,7 +1062,6 @@ export default function ProductDetails() {
                 );
               }
 
-              // paragraphs (default)
               return (
                 <div className="space-y-5">
                   {sections.map((s, i) => (

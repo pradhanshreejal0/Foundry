@@ -2,10 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import {
   Search,
-  LayoutGrid,
   Package,
   X,
-  SlidersHorizontal,
   ArrowUpDown,
   Plus,
   Zap,
@@ -16,11 +14,9 @@ import {
 import { api } from "@/lib/api";
 import { cloudinaryImage } from "@/lib/cloudinary";
 import { PriceTag } from "@/components/PriceTag";
-import { CategoryIcon } from "@/components/CategoryIcon";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
@@ -86,7 +82,7 @@ export default function Shop() {
         if (brandParam) params.set("brand", brandParam);
         if (ratingParam) params.set("minRating", ratingParam);
         if (inStockParam) params.set("inStock", "true");
-        params.set("limit", "100");
+        params.set("limit", "50"); // Fixed to 50 to adhere to backend MAX_LIMIT
         params.set("includeTotal", "false");
 
         const [productsRes, categoriesRes] = await Promise.all([
@@ -101,7 +97,6 @@ export default function Shop() {
           : productsRes?.products || [];
         setProducts(list);
 
-        // Extract unique brands for filter sidebar
         const extractedBrands = Array.from(
           new Set(
             list
@@ -157,8 +152,11 @@ export default function Shop() {
   }, [brandsList, brandSearch]);
 
   const displayedProducts = useMemo(() => {
-    if (!onSaleParam) return products;
-    return products.filter((p) => Number(p.discountPercentage || 0) > 0);
+    let result = products;
+    if (onSaleParam) {
+      result = result.filter((p) => Number(p.discountPercentage || 0) > 0);
+    }
+    return result;
   }, [products, onSaleParam]);
 
   const activeFilterCount = [
@@ -169,6 +167,7 @@ export default function Shop() {
     brandParam ? 1 : 0,
     ratingParam ? 1 : 0,
     inStockParam ? 1 : 0,
+    categoryId ? 1 : 0,
   ].reduce((a, b) => a + b, 0);
 
   const updateParams = (patch) => {
@@ -248,8 +247,14 @@ export default function Shop() {
           )}
         </Link>
         <div className="flex flex-1 flex-col p-3.5">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            {product.brand || product.category?.name || "Collection"}
+          <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
+            <span>{product.brand || product.category?.name || "Collection"}</span>
+            {product.ratings?.average > 0 && (
+              <span className="flex items-center gap-1 font-semibold text-amber-500">
+                <Star className="h-3 w-3 fill-current" />
+                {Number(product.ratings.average).toFixed(1)}
+              </span>
+            )}
           </div>
           <Link to={`/products/${product._id}`} className="mt-1">
             <h3 className="min-h-[2.5rem] line-clamp-2 text-[13px] font-semibold leading-snug hover:text-primary">
@@ -601,6 +606,12 @@ export default function Shop() {
                 <Badge variant="secondary" className="gap-1 text-xs">
                   Sort: {sortParam}
                   <button onClick={() => updateParams({ sort: "" })}><X className="h-3 w-3" /></button>
+                </Badge>
+              )}
+              {categoryId && (
+                <Badge variant="secondary" className="gap-1 text-xs">
+                  Category: {selectedCategory?.name || "Selected"}
+                  <button onClick={() => updateParams({ category: "" })}><X className="h-3 w-3" /></button>
                 </Badge>
               )}
               {brandParam && (
