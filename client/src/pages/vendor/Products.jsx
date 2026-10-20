@@ -333,6 +333,12 @@ export default function Products() {
         : [],
     };
 
+    // Legacy products may not have a brand. An unrelated edit must not turn
+    // the empty form value into an explicit blank-brand update.
+    if (editingProduct && !editingProduct.brand && !formData.brand.trim()) {
+      delete payload.brand;
+    }
+
     saveLockRef.current = true;
     setSaving(true);
     try {

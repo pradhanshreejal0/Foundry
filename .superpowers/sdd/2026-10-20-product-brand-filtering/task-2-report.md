@@ -47,3 +47,13 @@ Commands/results:
 - `node --test server/utils/productFilters.test.js` — PASS, 6/6.
 - `npm --prefix server test` — PASS (`node --check server.js`).
 - `git diff --check` — PASS.
+
+## Fix round 2: legacy blank-brand update
+
+Updated `client/src/pages/vendor/Products.jsx` so a PUT for a legacy product with no stored brand omits `brand` when the edit form remains blank. New creates still reject blank brands, and nonblank edits continue sending the raw brand for server normalization.
+
+Commands/results:
+- `node --test server/utils/productFilters.test.js` — PASS, 6/6.
+- `npm --prefix server test` — PASS (`node --check server.js`).
+- `node --check server/controllers/productController.js` — PASS.
+- `git diff --check` — PASS.
