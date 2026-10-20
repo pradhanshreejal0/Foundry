@@ -78,6 +78,7 @@ export default function Products() {
   const [generatingAi, setGeneratingAi] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
+    brand: "",
     descriptionSections: [{ title: "", content: "" }],
     descriptionStyle: "paragraphs",
     price: "",
@@ -144,6 +145,7 @@ export default function Products() {
     setEditingProduct(null);
     setFormData({
       title: "",
+      brand: "",
       descriptionSections: [{ title: "", content: "" }],
       descriptionStyle: "paragraphs",
       price: "",
@@ -181,6 +183,7 @@ export default function Products() {
     }
     setFormData({
       title: product.title,
+      brand: product.brand || "",
       descriptionSections: sections,
       descriptionStyle: product.descriptionStyle || "paragraphs",
       price: product.price,
@@ -260,6 +263,10 @@ export default function Products() {
 
     if (!formData.category) {
       setError("Please select a category");
+      return;
+    }
+    if (!editingProduct && !formData.brand.trim()) {
+      setError("Brand is required");
       return;
     }
 
@@ -419,6 +426,20 @@ export default function Products() {
                     setFormData({ ...formData, title: e.target.value })
                   }
                   required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="brand">Brand</Label>
+                <Input
+                  id="brand"
+                  value={formData.brand}
+                  onChange={(e) =>
+                    setFormData({ ...formData, brand: e.target.value })
+                  }
+                  placeholder="e.g. Acme"
+                  maxLength={120}
+                  required={!editingProduct}
                 />
               </div>
 
