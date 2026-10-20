@@ -216,7 +216,7 @@ export default function Home() {
 
   const categoryTiles =
     categories.length >= 4
-      ? categories.slice(0, 4).map((c, i) => ({
+      ? categories.slice(0, 4).map((c) => ({
           name: c.name,
           line: c.description || "Explore our collection",
           image: c.image || c.banner || "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=900",
@@ -305,7 +305,7 @@ export default function Home() {
               to={
                 item.id
                   ? `/products?category=${item.id}`
-                  : `/products?q=${encodeURIComponent(item.name)}`
+                  : `/products?search=${encodeURIComponent(item.name)}`
               }
               className="group relative flex min-h-55 flex-col justify-end overflow-hidden rounded-lg bg-cover bg-center p-4 text-primary-foreground sm:min-h-65"
               style={{
@@ -331,7 +331,7 @@ export default function Home() {
         note="Picked with intention"
         items={featured.length ? featured : bestsellers}
         loading={loading}
-        link="/products?sort=featured"
+        link="/products?sort=rating"
       />
 
       {/* —— Ad slot B —— */}
