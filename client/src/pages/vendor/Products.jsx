@@ -102,6 +102,31 @@ export default function Products() {
   const [searchParams] = useSearchParams();
   const lowStockOnly = searchParams.get("lowStock") === "true";
 
+  const resetForm = () => {
+    setEditingProduct(null);
+    setFormData({
+      title: "",
+      brand: "",
+      descriptionSections: [{ title: "", content: "" }],
+      descriptionStyle: "paragraphs",
+      price: "",
+      stock: "",
+      category: "",
+      images: [],
+      isPublished: true,
+      discountPercentage: "",
+      hasVariants: false,
+      variants: [],
+    });
+    setSizeList([]);
+    setColorList([]);
+    setCustomSize("");
+    setCustomColor("");
+    setCategorySearch("");
+    setCategoryOpen(false);
+    setError("");
+  };
+
   const loadProducts = useCallback(async () => {
     const query = lowStockOnly ? "?lowStock=true" : "";
     return api(`/products/vendor/my-products${query}`, { accessToken });
@@ -142,28 +167,7 @@ export default function Products() {
   }, [accessToken, lowStockOnly, loadProducts]);
 
   const openCreateDialog = () => {
-    setEditingProduct(null);
-    setFormData({
-      title: "",
-      brand: "",
-      descriptionSections: [{ title: "", content: "" }],
-      descriptionStyle: "paragraphs",
-      price: "",
-      stock: "",
-      category: "",
-      images: [],
-      isPublished: true,
-      discountPercentage: "",
-      hasVariants: false,
-      variants: [],
-    });
-    setSizeList([]);
-    setColorList([]);
-    setCustomSize("");
-    setCustomColor("");
-    setCategorySearch("");
-    setCategoryOpen(false);
-    setError("");
+    resetForm();
     setDialogOpen(true);
   };
 
@@ -265,7 +269,9 @@ export default function Products() {
       setError("Please select a category");
       return;
     }
-    if (!editingProduct && !formData.brand.trim()) {
+    const isLegacyBrandlessEdit =
+      editingProduct && !editingProduct.brand && !formData.brand.trim();
+    if (!formData.brand.trim() && !isLegacyBrandlessEdit) {
       setError("Brand is required");
       return;
     }
@@ -357,6 +363,7 @@ export default function Products() {
       }
 
       setDialogOpen(false);
+      resetForm();
       const data = await loadProducts();
       setProducts(data);
     } catch (err) {
@@ -401,7 +408,13 @@ export default function Products() {
           )}
         </div>
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog
+          open={dialogOpen}
+          onOpenChange={(open) => {
+            if (!open) resetForm();
+            setDialogOpen(open);
+          }}
+        >
           <DialogTrigger asChild>
             <Button
               onClick={openCreateDialog}
