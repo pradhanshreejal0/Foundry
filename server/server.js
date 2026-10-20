@@ -29,6 +29,7 @@ import wishlistRoutes from "./routes/wishlistRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import settingsRoutes from "./routes/settingsRoutes.js";
+import homepageRoutes from "./routes/homepageRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
 import newsletterRoutes from "./routes/newsletterRoutes.js";
@@ -155,6 +156,7 @@ const routes = {
   reviews: reviewRoutes,
   users: userRoutes,
   settings: settingsRoutes,
+  homepage: homepageRoutes,
   chats: chatRoutes,
   contact: contactRoutes,
   newsletter: newsletterRoutes,

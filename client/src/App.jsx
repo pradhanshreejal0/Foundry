@@ -45,6 +45,7 @@ import Returns from "@/pages/Returns";
 import Shipping from "@/pages/Shipping";
 import FAQ from "@/pages/FAQ";
 import Vendors from "@/pages/admin/Vendors";
+import HomepageLayoutEditor from "@/pages/admin/HomepageLayoutEditor";
 
 // All page routes, grouped by who may see them: public/customer, auth pages, vendor, admin.
 function App() {
@@ -120,6 +121,7 @@ function App() {
         <Route path="/admin/vendors/manage" element={<Vendors />} />
         <Route path="/admin/coupons" element={<AdminCoupons />} />
         <Route path="/admin/payouts" element={<AdminPayouts />} />
+        <Route path="/admin/homepage-layout" element={<HomepageLayoutEditor />} />
       </Route>
     </Routes>
   );

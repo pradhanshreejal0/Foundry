@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 // import { BarChart3, Users, Tag, Image, ShoppingBag, Menu, LogOut } from "lucide-react";
-import { BarChart3, Users, Tag, Image, ShoppingBag, Menu, LogOut, Settings as SettingsIcon, MessageCircle, MapPin, TicketPercent, Wallet, } from "lucide-react";
+import { BarChart3, Users, Tag, Image, ShoppingBag, Menu, LogOut, Settings as SettingsIcon, MessageCircle, MapPin, TicketPercent, Wallet, LayoutTemplate } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
@@ -17,6 +17,7 @@ const navItems = [
   { label: "Orders", to: "/admin/orders", icon: ShoppingBag },
   { label: "Coupons", to: "/admin/coupons", icon: TicketPercent },
   { label: "Payouts", to: "/admin/payouts", icon: Wallet },
+  { label: "Homepage Layout", to: "/admin/homepage-layout", icon: LayoutTemplate },
   { label: "Settings", to: "/admin/settings", icon: SettingsIcon },
 ];
 
