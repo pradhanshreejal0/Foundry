@@ -52,6 +52,7 @@ export default function Shop() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [brandsList, setBrandsList] = useState([]);
+  const [brandSearch, setBrandSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState(qParam);
@@ -149,6 +150,12 @@ export default function Shop() {
     [categories, categoryId]
   );
 
+  const filteredBrands = useMemo(() => {
+    if (!brandSearch.trim()) return brandsList;
+    const term = brandSearch.toLowerCase();
+    return brandsList.filter((b) => b.toLowerCase().includes(term));
+  }, [brandsList, brandSearch]);
+
   const displayedProducts = useMemo(() => {
     if (!onSaleParam) return products;
     return products.filter((p) => Number(p.discountPercentage || 0) > 0);
@@ -199,6 +206,7 @@ export default function Shop() {
     setSearch("");
     setMinPrice("");
     setMaxPrice("");
+    setBrandSearch("");
     setSearchParams({});
   };
 
@@ -402,20 +410,20 @@ export default function Shop() {
             )}
           </div>
 
-          {/* Categories Filter */}
+          {/* Categories Filter with Clean Nesting */}
           <div className="space-y-3">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Categories
             </h3>
-            <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
+            <div className="space-y-1 max-h-60 overflow-y-auto pr-1">
               <button
                 type="button"
                 onClick={() => selectCategory("")}
-                className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-xs font-medium transition-colors ${
                   !categoryId ? "bg-primary text-primary-foreground font-semibold" : "hover:bg-muted"
                 }`}
               >
-                <span>All Categories</span>
+                <span>All Departments</span>
                 {!categoryId && <Check className="h-3.5 w-3.5" />}
               </button>
               {parents.map((cat) => {
@@ -424,12 +432,12 @@ export default function Shop() {
                   (c) => String(getParentId(c)) === String(cat._id)
                 );
                 return (
-                  <div key={cat._id} className="space-y-1">
+                  <div key={cat._id} className="space-y-1 pt-1">
                     <button
                       type="button"
                       onClick={() => selectCategory(String(cat._id))}
-                      className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-xs transition-colors ${
-                        isSelected ? "bg-primary text-primary-foreground font-semibold" : "hover:bg-muted"
+                      className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-xs transition-colors ${
+                        isSelected ? "bg-primary text-primary-foreground font-semibold" : "hover:bg-muted font-medium"
                       }`}
                     >
                       <span className="truncate">{cat.name}</span>
@@ -442,11 +450,11 @@ export default function Shop() {
                           key={sub._id}
                           type="button"
                           onClick={() => selectCategory(String(sub._id))}
-                          className={`flex w-full items-center justify-between rounded-md pl-5 pr-2 py-1 text-xs transition-colors ${
+                          className={`flex w-full items-center justify-between rounded-md pl-6 pr-2.5 py-1 text-xs transition-colors ${
                             isSubSelected ? "bg-secondary text-secondary-foreground font-semibold" : "text-muted-foreground hover:bg-muted"
                           }`}
                         >
-                          <span className="truncate">— {sub.name}</span>
+                          <span className="truncate">↳ {sub.name}</span>
                           {isSubSelected && <Check className="h-3.5 w-3.5" />}
                         </button>
                       );
@@ -459,26 +467,37 @@ export default function Shop() {
 
           <hr />
 
-          {/* Brands Filter */}
+          {/* Brand Search & Filter */}
           {brandsList.length > 0 && (
             <div className="space-y-3">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Brand
+                Brand Search & Filter
               </h3>
+              <Input
+                type="text"
+                placeholder="Search brand..."
+                value={brandSearch}
+                onChange={(e) => setBrandSearch(e.target.value)}
+                className="h-8 text-xs mb-2"
+              />
               <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                {brandsList.map((brandName) => {
-                  const isChecked = brandParam.toLowerCase() === brandName.toLowerCase();
-                  return (
-                    <div
-                      key={brandName}
-                      onClick={() => updateParams({ brand: isChecked ? "" : brandName })}
-                      className="flex items-center gap-2 cursor-pointer text-xs py-1 px-1.5 rounded hover:bg-muted"
-                    >
-                      <Checkbox checked={isChecked} onCheckedChange={() => {}} />
-                      <span className="truncate flex-1">{brandName}</span>
-                    </div>
-                  );
-                })}
+                {filteredBrands.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-1 px-1">No brands found</p>
+                ) : (
+                  filteredBrands.map((brandName) => {
+                    const isChecked = brandParam.toLowerCase() === brandName.toLowerCase();
+                    return (
+                      <div
+                        key={brandName}
+                        onClick={() => updateParams({ brand: isChecked ? "" : brandName })}
+                        className="flex items-center gap-2 cursor-pointer text-xs py-1.5 px-2 rounded hover:bg-muted transition-colors"
+                      >
+                        <Checkbox checked={isChecked} onCheckedChange={() => {}} />
+                        <span className="truncate flex-1 font-medium">{brandName}</span>
+                      </div>
+                    );
+                  })
+                )}
               </div>
               <hr />
             </div>
@@ -556,14 +575,14 @@ export default function Shop() {
             <div className="space-y-2">
               <div
                 onClick={() => updateParams({ onSale: !onSaleParam })}
-                className="flex items-center gap-2 cursor-pointer text-xs py-1 px-1.5 rounded hover:bg-muted"
+                className="flex items-center gap-2 cursor-pointer text-xs py-1.5 px-2 rounded hover:bg-muted"
               >
                 <Checkbox checked={onSaleParam} onCheckedChange={() => {}} />
                 <span>On Sale / Discounted</span>
               </div>
               <div
                 onClick={() => updateParams({ inStock: !inStockParam })}
-                className="flex items-center gap-2 cursor-pointer text-xs py-1 px-1.5 rounded hover:bg-muted"
+                className="flex items-center gap-2 cursor-pointer text-xs py-1.5 px-2 rounded hover:bg-muted"
               >
                 <Checkbox checked={inStockParam} onCheckedChange={() => {}} />
                 <span>In Stock Only</span>
