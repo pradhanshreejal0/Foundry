@@ -9,8 +9,8 @@ const SORT_VALUES = new Set([
   "oldest",
   "price_asc",
   "price_desc",
-  "rating_desc",
-  "name_asc",
+  "rating",
+  "discount",
 ]);
 
 const invalid = (message) => {
@@ -140,8 +140,8 @@ export const buildProductSort = (sort = "newest") => {
     case "oldest": return { createdAt: 1 };
     case "price_asc": return { price: 1 };
     case "price_desc": return { price: -1 };
-    case "rating_desc": return { "ratings.average": -1, "ratings.count": -1 };
-    case "name_asc": return { title: 1 };
+    case "rating": return { "ratings.average": -1, "ratings.count": -1 };
+    case "discount": return { discountPercentage: -1 };
     case "newest": return { createdAt: -1 };
     default: invalid("Invalid sort");
   }

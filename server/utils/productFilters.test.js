@@ -33,7 +33,7 @@ test("parseProductFilters accepts the complete filter contract", () => {
     minRating: "0",
     inStock: "true",
     onSale: "false",
-    sort: "rating_desc",
+    sort: "rating",
     page: "2",
     limit: "24",
     includeTotal: "false",
@@ -46,7 +46,7 @@ test("parseProductFilters accepts the complete filter contract", () => {
     minRating: 0,
     inStock: true,
     onSale: false,
-    sort: "rating_desc",
+    sort: "rating",
     page: 2,
     limit: 24,
     includeTotal: false,
@@ -124,6 +124,9 @@ test("buildProductSort supports all six sort values", () => {
   assert.deepEqual(buildProductSort("oldest"), { createdAt: 1 });
   assert.deepEqual(buildProductSort("price_asc"), { price: 1 });
   assert.deepEqual(buildProductSort("price_desc"), { price: -1 });
-  assert.deepEqual(buildProductSort("rating_desc"), { "ratings.average": -1, "ratings.count": -1 });
-  assert.deepEqual(buildProductSort("name_asc"), { title: 1 });
+  assert.deepEqual(buildProductSort("rating"), { "ratings.average": -1, "ratings.count": -1 });
+  assert.deepEqual(buildProductSort("discount"), { discountPercentage: -1 });
+  for (const unsupported of ["rating_desc", "name_asc"]) {
+    invalid(() => buildProductSort(unsupported));
+  }
 });
