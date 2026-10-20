@@ -33,6 +33,8 @@ const variantSchema = new mongoose.Schema(
 const productSchema = new mongoose.Schema(
   {
     title: { type: String, required: true, trim: true },
+    brand: { type: String, trim: true, maxlength: 120 },
+    brandNormalized: { type: String, trim: true, maxlength: 120 },
     description: { type: String, default: "" },
     descriptionSections: {
       type: [descriptionSectionSchema],
@@ -95,6 +97,8 @@ productSchema.virtual("finalPrice").get(function () {
 productSchema.index({ isPublished: 1, createdAt: -1 });
 productSchema.index({ isPublished: 1, price: 1 });
 productSchema.index({ isPublished: 1, category: 1 });
+productSchema.index({ brandNormalized: 1 });
+productSchema.index({ isPublished: 1, brandNormalized: 1, category: 1 });
 productSchema.index({ vendor: 1 });
 productSchema.index({ title: "text", description: "text" });
 
